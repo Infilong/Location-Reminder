@@ -4,6 +4,10 @@ apply plugin: 'kotlin-kapt'
 apply plugin: "androidx.navigation.safeargs.kotlin"
 apply plugin: 'com.google.gms.google-services'
 
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def googleMapApiKey = properties.getProperty('API_KEY')
+
 android {
     compileSdkVersion rootProject.compileSdkVersion
     buildToolsVersion "29.0.3"
@@ -15,6 +19,8 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        //This is the way to communicate a value between local.properties and Manifest
+        manifestPlaceholders = [ myApiMaps: googleMapApiKey ]
     }
     buildTypes {
         release {
