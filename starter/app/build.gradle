@@ -3,7 +3,9 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: "androidx.navigation.safeargs.kotlin"
 apply plugin: 'com.google.gms.google-services'
+apply plugin: 'kotlin-android-extensions'
 
+//Load API_KEY from local.properties
 Properties properties = new Properties()
 properties.load(project.rootProject.file('local.properties').newDataInputStream())
 def googleMapApiKey = properties.getProperty('API_KEY')
@@ -14,8 +16,8 @@ android {
 
     defaultConfig {
         applicationId "com.udacity.project4"
-        minSdkVersion rootProject.minSdkVersion
-        targetSdkVersion rootProject.targetSdkVersion
+        minSdkVersion 21
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -36,10 +38,10 @@ android {
         returnDefaultValues = true
     }
 
-    //dataBinding {
-    //    enabled = true
-    //    enabledForTests = true
-    //}
+    buildFeatures {
+        dataBinding true
+    }
+
     buildFeatures {
         viewBinding true
     }
@@ -133,6 +135,7 @@ dependencies {
         //note: don't specify individual library versions when using BoM
 //    implementation 'com.google.firebase:firebase-auth-ktx'
         implementation 'com.firebaseui:firebase-ui-auth:5.0.0'
+
 
 
     }
