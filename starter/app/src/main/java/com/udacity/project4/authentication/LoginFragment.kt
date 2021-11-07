@@ -39,9 +39,9 @@ class LoginFragment : Fragment() {
         binding = DataBindingUtil.inflate(inflater,
             R.layout.fragment_login,
             container,
-            true)
+            false)
 
-        binding.authButton.setOnClickListener(launchSignInFlow())
+        binding.authButton.setOnClickListener {launchSignInFlow()}
         return binding.root
     }
 
