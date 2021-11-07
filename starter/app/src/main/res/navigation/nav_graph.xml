@@ -34,6 +34,10 @@
     <fragment
         android:id="@+id/loginFragment"
         android:name="com.udacity.project4.authentication.LoginFragment"
-        android:label="LoginFragment" />
+        android:label="LoginFragment" >
+        <action
+            android:id="@+id/action_loginFragment_to_reminderListFragment"
+            app:destination="@id/reminderListFragment" />
+    </fragment>
 
 </navigation>

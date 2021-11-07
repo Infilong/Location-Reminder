@@ -41,7 +41,7 @@ class LoginFragment : Fragment() {
             container,
             false)
 
-        binding.authButton.setOnClickListener {launchSignInFlow()}
+        binding.authButton.setOnClickListener { launchSignInFlow() }
         return binding.root
     }
 
@@ -72,6 +72,10 @@ class LoginFragment : Fragment() {
             .setAvailableProviders(
                 providers
             ).build(), SIGN_IN_RESULT_CODE)
+
+        if (viewModel.authenticationState.value == LoginViewModel.AuthenticationState.AUTHENTICATED) {
+            findNavController().navigate(LoginFragmentDirections.actionLoginFragmentToReminderListFragment())
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

@@ -72,6 +72,7 @@ class ReminderListFragment : BaseFragment() {
         when (item.itemId) {
             R.id.logout -> {
 //                TODO: add the logout implementation
+
             }
         }
         return super.onOptionsItemSelected(item)
