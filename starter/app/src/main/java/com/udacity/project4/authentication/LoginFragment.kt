@@ -18,7 +18,7 @@ import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.R
-import com.udacity.project4.databinding.FragmentLoginBinding
+import com.udacity.project4.databinding.ActivityAuthenticationBinding
 
 class LoginFragment : Fragment() {
 
@@ -29,7 +29,7 @@ class LoginFragment : Fragment() {
 
     private val viewModel by viewModels<LoginViewModel>()
     private lateinit var navController: NavController
-    private lateinit var binding: FragmentLoginBinding
+    private lateinit var binding: ActivityAuthenticationBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -37,11 +37,10 @@ class LoginFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         binding = DataBindingUtil.inflate(inflater,
-            R.layout.fragment_login,
+            R.layout.activity_authentication,
             container,
             false)
 
-        binding.authButton.setOnClickListener { launchSignInFlow() }
         return binding.root
     }
 
@@ -52,9 +51,12 @@ class LoginFragment : Fragment() {
             navController.popBackStack(R.id.mainActivity, false)
         }
 
+        binding.authButton.setOnClickListener { launchSignInFlow() }
+
         viewModel.authenticationState.observe(viewLifecycleOwner, Observer { authenticationState ->
             when (authenticationState) {
                 LoginViewModel.AuthenticationState.AUTHENTICATED -> navController.popBackStack()
+
                 else -> Log.e(TAG,
                     "Authentication state that doesn't require any UI change $authenticationState")
             }
@@ -72,10 +74,6 @@ class LoginFragment : Fragment() {
             .setAvailableProviders(
                 providers
             ).build(), SIGN_IN_RESULT_CODE)
-
-        if (viewModel.authenticationState.value == LoginViewModel.AuthenticationState.AUTHENTICATED) {
-            findNavController().navigate(LoginFragmentDirections.actionLoginFragmentToReminderListFragment())
-        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
