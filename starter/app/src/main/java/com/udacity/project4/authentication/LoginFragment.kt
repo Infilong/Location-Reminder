@@ -29,30 +29,23 @@ class LoginFragment : Fragment() {
 
     private val viewModel by viewModels<LoginViewModel>()
     private lateinit var navController: NavController
-    private lateinit var binding: ActivityAuthenticationBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = DataBindingUtil.inflate(inflater,
-            R.layout.activity_authentication,
-            container,
-            false)
+        val binding = DataBindingUtil.inflate<ActivityAuthenticationBinding>(
+            inflater, R.layout.activity_authentication, container, false
+        )
+
+        binding.authButton.setOnClickListener { launchSignInFlow() }
 
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        navController = findNavController()
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
-            navController.popBackStack(R.id.mainActivity, false)
-        }
-
-        binding.authButton.setOnClickListener { launchSignInFlow() }
-
         viewModel.authenticationState.observe(viewLifecycleOwner, Observer { authenticationState ->
             when (authenticationState) {
                 LoginViewModel.AuthenticationState.AUTHENTICATED -> navController.popBackStack()
@@ -74,6 +67,7 @@ class LoginFragment : Fragment() {
             .setAvailableProviders(
                 providers
             ).build(), SIGN_IN_RESULT_CODE)
+        Log.i("action", "launchSignInFlow")
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -88,6 +82,4 @@ class LoginFragment : Fragment() {
             }
         }
     }
-
-
 }

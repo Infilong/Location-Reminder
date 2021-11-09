@@ -26,8 +26,6 @@ class AuthenticationActivity : AppCompatActivity() {
         //https://github.com/firebase/FirebaseUI-Android/blob/master/auth/README.md#custom-layout
 
     }
-
-
 }
 
 
