@@ -2,8 +2,11 @@ package com.udacity.project4.locationreminders
 
 import android.Manifest
 import android.annotation.TargetApi
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
@@ -11,10 +14,10 @@ import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.snackbar.Snackbar
+import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.databinding.ActivityRemindersBinding
 import kotlinx.android.synthetic.main.activity_reminders.*
-import kotlinx.android.synthetic.main.activity_reminders2.*
 
 /**
  * The RemindersActivity that holds the reminders fragments
@@ -85,8 +88,20 @@ class RemindersActivity : AppCompatActivity() {
             (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
                     && grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED)
         ) {
-            Snackbar.make(binding.activityMapsMain)
-
+            //This app has very little use when permissions are not granted so present a snackbar explaining
+                // that the user needs location permissions in order to play.
+            Snackbar.make(binding.root,
+                R.string.permission_denied_explanation,
+                Snackbar.LENGTH_INDEFINITE)
+                .setAction(R.string.settings) {
+                    startActivity(Intent().apply {
+                        action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                        data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    })
+                }.show()
+        }else{
+            requestForegroundAndBackgroundLocationPermissions()
         }
     }
 }
