@@ -12,9 +12,8 @@ import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.R
-import com.udacity.project4.authentication.AuthenticationActivity.Companion.SIGN_IN_RESULT_CODE
 import com.udacity.project4.databinding.ActivityAuthenticationBinding
-import com.udacity.project4.locationreminders.ReminderDescriptionActivity
+import com.udacity.project4.locationreminders.RemindersActivity
 
 /**
  * This class should be the starting point of the app, It asks the users to sign in / register, and redirects the
@@ -65,7 +64,7 @@ class AuthenticationActivity : AppCompatActivity() {
             if (resultCode == Activity.RESULT_OK) {
                 Log.i(TAG,
                     "Successsfully signed in user" + "${FirebaseAuth.getInstance().currentUser?.displayName}")
-                val intent = Intent(this, ReminderDescriptionActivity::class.java)
+                val intent = Intent(this, RemindersActivity::class.java)
                 startActivity(intent)
             } else {
                 Log.i(TAG, "Sign in failed ${response?.error?.errorCode}")
