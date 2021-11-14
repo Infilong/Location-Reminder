@@ -32,8 +32,13 @@ class RemindersActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reminders)
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_reminders)
 
+
+    }
+
+    override fun onStart(){
+        super.onStart()
+        requestForegroundAndBackgroundLocationPermissions()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -46,6 +51,10 @@ class RemindersActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
+    /*
+    *  Determines whether the app has the appropriate permissions across Android 10+ and all other
+    *  Android versions.
+    */
     @TargetApi(29)
     private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
         val foregroundLocationApproved =
@@ -61,6 +70,9 @@ class RemindersActivity : AppCompatActivity() {
         return foregroundLocationApproved && backgroundPermissionApproved
     }
 
+    /*
+     *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
+     */
     @TargetApi(29)
     private fun requestForegroundAndBackgroundLocationPermissions() {
         if (foregroundAndBackgroundLocationPermissionApproved())
