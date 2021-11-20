@@ -76,14 +76,17 @@ class ReminderListFragment : BaseFragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.logout -> {
-
+                //Sign out implementation
                 AuthUI.getInstance().signOut(requireContext())
                     .addOnSuccessListener {
                         val logOutIntent = Intent(activity, AuthenticationActivity::class.java)
+                        //FLAG_ACTIVITY_CLEAR_TOP,https://developer.android.com/reference/android/content/Intent#FLAG_ACTIVITY_CLEAR_TOP
+                        //If set, and the activity being launched is already running in the current task,
+                        // then instead of launching a new instance of that activity,
+                        // all of the other activities on top of it will be closed and this Intent will be delivered to the (now on top) old activity as a new Intent.
                         logOutIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                         startActivity(logOutIntent)
                         requireActivity().finish()
-
                     }
             }
         }
