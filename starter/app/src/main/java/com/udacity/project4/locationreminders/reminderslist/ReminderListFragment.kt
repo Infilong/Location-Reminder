@@ -20,6 +20,7 @@ class ReminderListFragment : BaseFragment() {
     override val _viewModel: RemindersListViewModel by viewModel()
 
     private lateinit var binding: FragmentReminderListBinding
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -47,7 +48,6 @@ class ReminderListFragment : BaseFragment() {
         binding.addReminderFAB.setOnClickListener {
             navigateToAddReminder()
         }
-
     }
 
     override fun onResume() {
@@ -69,7 +69,7 @@ class ReminderListFragment : BaseFragment() {
         val adapter = RemindersListAdapter {
         }
 
-//        setup the recycler view using the extension function
+        // setup the recycler view using the extension function
         binding.reminderssRecyclerView.setup(adapter)
     }
 
@@ -83,15 +83,17 @@ class ReminderListFragment : BaseFragment() {
                         logOutIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                         startActivity(logOutIntent)
                         requireActivity().finish()
+
                     }
             }
         }
         return super.onOptionsItemSelected(item)
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
-//        display logout as menu item
+        // display logout as menu item
         inflater.inflate(R.menu.main_menu, menu)
     }
 
