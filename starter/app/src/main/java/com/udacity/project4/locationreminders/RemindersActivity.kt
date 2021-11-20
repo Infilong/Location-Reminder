@@ -11,6 +11,7 @@ import android.util.Log
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.databinding.DataBindingUtil.setContentView
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.BuildConfig
@@ -31,7 +32,7 @@ class RemindersActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reminders)
-
+        binding = setContentView(this, R.layout.activity_reminders)
 
     }
 
@@ -69,20 +70,32 @@ class RemindersActivity : AppCompatActivity() {
         return foregroundLocationApproved && backgroundPermissionApproved
     }
 
+    @TargetApi(29)
+    private fun foregroundLocationPermissionApproved(): Boolean {
+
+        return (PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(this,
+            Manifest.permission.ACCESS_FINE_LOCATION))
+    }
+
     /*
      *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
      */
     @TargetApi(29)
     private fun requestForegroundAndBackgroundLocationPermissions() {
-        if (foregroundAndBackgroundLocationPermissionApproved())
+        if (foregroundAndBackgroundLocationPermissionApproved()) {
             return
+        }else if (foregroundLocationPermissionApproved()){
+            return
+        }
+
         var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         val resultCode = when {
             runningQOrLater -> {
                 permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
                 FINE_AND_BACKGROUND_LOCATIONS_REQUEST_CODE
             }
-            else -> {FINE_LOCATION_REQUEST_CODE
+            else -> {
+                FINE_LOCATION_REQUEST_CODE
             }
         }
         Log.i(TAG, "Request foreground only location permission")
@@ -96,10 +109,7 @@ class RemindersActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         Log.d(TAG, "onRequestPermissionResult")
-        if (grantResults.isEmpty() || grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
-            (requestCode == FINE_AND_BACKGROUND_LOCATIONS_REQUEST_CODE
-                    && grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED)
-        ) {
+        if (grantResults.isEmpty() || grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED) {
             //This app has very little use when permissions are not granted so present a snackbar explaining
             // that the user needs location permissions in order to play.
             Snackbar.make(binding.root,
