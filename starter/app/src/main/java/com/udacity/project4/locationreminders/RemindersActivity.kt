@@ -12,7 +12,11 @@ import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil.setContentView
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.NavigationUI
+import androidx.navigation.ui.NavigationUI.setupActionBarWithNavController
 import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
@@ -28,15 +32,25 @@ class RemindersActivity : AppCompatActivity() {
         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
 
     private lateinit var binding: ActivityRemindersBinding
+    private lateinit var appBarConfiguration: AppBarConfiguration
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reminders)
+        val navController = this.findNavController(R.id.nav_host_fragment)
+        appBarConfiguration = AppBarConfiguration(navController.graph)
+        setupActionBarWithNavController(this, navController, appBarConfiguration)
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        val navController = this.findNavController(R.id.nav_host_fragment)
+        return NavigationUI.navigateUp(navController, appBarConfiguration)
     }
 
     override fun onStart() {
         super.onStart()
         requestForegroundAndBackgroundLocationPermissions()
+
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
