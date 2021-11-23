@@ -24,6 +24,7 @@ import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
+import java.util.*
 
 
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
@@ -49,21 +50,24 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         binding.viewModel = _viewModel
         binding.lifecycleOwner = this
+
+        //The FusedLocationProviderClient provides several methods to retrieve device location information.
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context!!)
 
         setHasOptionsMenu(true)
         setDisplayHomeAsUpEnabled(true)
 
 //        TODO: add the map setup implementation
-        val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+        val mapFragment = childFragmentManager
+            .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
 //        TODO: call this function after the user confirms on the selected location
-        binding.button.setOnClickListener {
+        binding.saveButton.setOnClickListener {
             onLocationSelected()
-            zoomCurrentLocation()
         }
 
+        zoomCurrentLocation()
         return binding.root
     }
 
@@ -89,10 +93,21 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     //        TODO: put a marker to location that the user selected
     private fun setMapLongClick(map: GoogleMap) {
-        map.addMarker(MarkerOptions()
-            .title(getString(R.string.dropped_pin))
-            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
-        )
+        map.setOnMapLongClickListener { latLng ->
+            val snippet = String.format(
+                Locale.getDefault(),
+                "Lat:%1$.5f, Long:%2$5f",
+                latLng.latitude,
+                latLng.longitude
+            )
+
+            map.addMarker(MarkerOptions()
+                .position(latLng)
+                .title(getString(R.string.dropped_pin))
+                .snippet(snippet)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+            )
+        }
     }
 
     private fun isPermissionGranted(): Boolean {
