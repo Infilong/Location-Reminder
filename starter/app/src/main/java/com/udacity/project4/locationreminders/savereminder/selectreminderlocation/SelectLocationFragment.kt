@@ -55,7 +55,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context!!)
 
         setHasOptionsMenu(true)
-        setDisplayHomeAsUpEnabled(true)
 
 //        TODO: add the map setup implementation
         val mapFragment = childFragmentManager

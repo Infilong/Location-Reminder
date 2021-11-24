@@ -33,7 +33,7 @@ class ReminderListFragment : BaseFragment() {
         binding.viewModel = _viewModel
 
         setHasOptionsMenu(true)
-        setDisplayHomeAsUpEnabled(false)
+
         setTitle(getString(R.string.app_name))
 
         binding.refreshLayout.setOnRefreshListener { _viewModel.loadReminders() }
