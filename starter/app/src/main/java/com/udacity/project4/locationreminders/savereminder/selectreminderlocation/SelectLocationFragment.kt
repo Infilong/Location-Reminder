@@ -106,8 +106,20 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 .position(latLng)
                 .title(getString(R.string.dropped_pin))
                 .snippet(snippet)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
             )
+        }
+    }
+
+    //put a marker to point of interest that the user selected
+    private fun setPoiClick(map: GoogleMap) {
+        map.setOnPoiClickListener { poi ->
+            map.clear()
+            val poiMarker = map.addMarker(MarkerOptions()
+                .position(poi.latLng)
+                .title(poi.name)
+            )
+            poiMarker.showInfoWindow()
+            marker = poiMarker
         }
     }
 
@@ -165,15 +177,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         findNavController().popBackStack()
     }
 
-    private fun setPoiClick(map: GoogleMap) {
-        map.setOnPoiClickListener { poi ->
-            map.clear()
-            val poiMarker = map.addMarker(MarkerOptions()
-                .position(poi.latLng)
-                .title(poi.name))
-            poiMarker.showInfoWindow()
-        }
-    }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.map_options, menu)
