@@ -75,6 +75,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         setMapStyle(map)
         setMapLongClick(map)
         enableCurrentLocation()
+        setPoiClick(map)
     }
 
     //        TODO: add style to the map
@@ -104,7 +105,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 .position(latLng)
                 .title(getString(R.string.dropped_pin))
                 .snippet(snippet)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
             )
         }
     }
@@ -163,6 +164,14 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         findNavController().popBackStack()
     }
 
+    private fun setPoiClick(map: GoogleMap) {
+        map.setOnPoiClickListener { poi ->
+            val poiMarker = map.addMarker(MarkerOptions()
+                .position(poi.latLng)
+                .title(poi.name))
+            poiMarker.showInfoWindow()
+        }
+    }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.map_options, menu)
