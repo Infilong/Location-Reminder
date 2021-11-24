@@ -7,6 +7,7 @@ import android.content.res.Resources
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
@@ -22,7 +23,6 @@ import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
-import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 import java.util.*
 
@@ -76,6 +76,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         setMapLongClick(map)
         enableCurrentLocation()
         setPoiClick(map)
+        Toast.makeText(context, "Please choose a place of interest", Toast.LENGTH_SHORT).show()
     }
 
     //        TODO: add style to the map
@@ -100,7 +101,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 latLng.latitude,
                 latLng.longitude
             )
-
+            map.clear()
             map.addMarker(MarkerOptions()
                 .position(latLng)
                 .title(getString(R.string.dropped_pin))
@@ -166,6 +167,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private fun setPoiClick(map: GoogleMap) {
         map.setOnPoiClickListener { poi ->
+            map.clear()
             val poiMarker = map.addMarker(MarkerOptions()
                 .position(poi.latLng)
                 .title(poi.name))
