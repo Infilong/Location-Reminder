@@ -76,7 +76,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         setMapLongClick(map)
         enableCurrentLocation()
         setPoiClick(map)
-        Toast.makeText(context, "Please choose a place of interest", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Please choose a place", Toast.LENGTH_SHORT).show()
     }
 
     //        TODO: add style to the map
