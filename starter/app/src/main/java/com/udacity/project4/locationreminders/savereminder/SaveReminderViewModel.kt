@@ -1,12 +1,30 @@
 package com.udacity.project4.locationreminders.savereminder
 
+import android.Manifest
+import android.annotation.TargetApi
 import android.app.Application
+import android.content.Intent
+import android.content.IntentSender
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
+import android.util.Log
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.ui.AppBarConfiguration
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.maps.model.PointOfInterest
+import com.google.android.material.snackbar.Snackbar
+import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseViewModel
 import com.udacity.project4.base.NavigationCommand
+import com.udacity.project4.databinding.ActivityRemindersBinding
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
@@ -20,6 +38,8 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
     val selectedPOI = MutableLiveData<PointOfInterest>()
     val latitude = MutableLiveData<Double>()
     val longitude = MutableLiveData<Double>()
+
+    private lateinit var binding: ActivityRemindersBinding
 
     /**
      * Clear the live data objects to start fresh next time the view model gets called
@@ -79,4 +99,7 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
         }
         return true
     }
+
+
+
 }

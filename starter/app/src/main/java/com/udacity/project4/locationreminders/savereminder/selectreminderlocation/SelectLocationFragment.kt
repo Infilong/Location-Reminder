@@ -2,6 +2,8 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 
 import android.annotation.SuppressLint
+import android.app.PendingIntent
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.os.Bundle
@@ -13,6 +15,7 @@ import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -22,6 +25,7 @@ import com.google.android.gms.maps.model.*
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
+import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import org.koin.android.ext.android.inject
 import java.util.*
@@ -56,12 +60,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         setHasOptionsMenu(true)
 
-//        TODO: add the map setup implementation
+//       add the map setup implementation
         val mapFragment = childFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-//        TODO: call this function after the user confirms on the selected location
+//       call this function after the user confirms on the selected location
         binding.saveButton.setOnClickListener {
             onLocationSelected()
         }
@@ -79,7 +83,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         Toast.makeText(context, "Please choose a place", Toast.LENGTH_SHORT).show()
     }
 
-    //        TODO: add style to the map
+    //        add style to the map
     private fun setMapStyle(map: GoogleMap) {
         try {
             val success =
@@ -92,7 +96,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
-    //        TODO: put a marker to location that the user selected
+    //        put a marker to location that the user selected
     private fun setMapLongClick(map: GoogleMap) {
         map.setOnMapLongClickListener { latLng ->
             val snippet = String.format(
@@ -140,7 +144,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     //reference https://developers.google.com/maps/documentation/android-sdk/current-place-tutorial#get-the-location-of-the-android-device-and-position-the-map
-    //        TODO: zoom to the user location after taking his permission
+    //        zoom to the user location after taking his permission
     @SuppressLint("MissingPermission")
     private fun zoomCurrentLocation() {
         if (isPermissionGranted()) {
@@ -166,7 +170,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private fun onLocationSelected() {
-        //        TODO: When the user confirms on the selected location,
+        //        When the user confirms on the selected location,
         //         send back the selected location details to the view model
         //         and navigate back to the previous fragment to save the reminder and add the geofence
         marker?.let {
@@ -197,7 +201,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        // TODO: Change the map type based on the user's selection.
+        // Change the map type based on the user's selection.
         R.id.normal_map -> {
             map.mapType = GoogleMap.MAP_TYPE_NORMAL
             true
