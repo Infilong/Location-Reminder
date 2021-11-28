@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -44,7 +45,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private val REQUEST_LOCATION_PERMISSION = 1
     private val zoomLevel = 15f
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private val defaultLocation = LatLng(40.0, 70.0)
+    private var lastKnownLocation: Location? = null
+    private val defaultLocation = LatLng(100.0, 30.0)
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -76,6 +78,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
+        //Show current location blue dot
+        if (isPermissionGranted()){
+            map.isMyLocationEnabled = true
+        }
+
         setMapStyle(map)
         setMapLongClick(map)
         enableCurrentLocation()
@@ -152,7 +159,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             locationResult.addOnCompleteListener(requireActivity()) { task ->
                 if (task.isSuccessful) {
                     // Set the map's camera position to the current location of the device.
-                    val lastKnownLocation = task.result
+                    lastKnownLocation = task.result
                     if (lastKnownLocation != null) {
                         map?.moveCamera(CameraUpdateFactory.newLatLngZoom(
                             LatLng(lastKnownLocation!!.latitude,
