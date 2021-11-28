@@ -13,14 +13,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.app.ActivityCompat
+import android.widget.Toast
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.common.api.ResolvableApiException
-import com.google.android.gms.location.GeofencingClient
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.gms.location.*
 import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
@@ -31,6 +28,7 @@ import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
+import java.util.concurrent.TimeUnit
 
 class SaveReminderFragment : BaseFragment() {
     //Get the view model this time as a single to be shared with the another fragment
@@ -49,6 +47,8 @@ class SaveReminderFragment : BaseFragment() {
         PendingIntent.getBroadcast(requireContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
     private lateinit var geofencingClient: GeofencingClient
+
+    private lateinit var newReminder: ReminderDataItem
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -83,11 +83,13 @@ class SaveReminderFragment : BaseFragment() {
             val latitude = _viewModel.latitude.value
             val longitude = _viewModel.longitude.value
 
-            val newReminder = ReminderDataItem(title, description, location, latitude, longitude)
-
-//            TODO: use the user entered reminder details to:
+//            use the user entered reminder details to:
 //             1) add a geofencing request
 //             2) save the reminder to the local db
+            newReminder = ReminderDataItem(title, description, location, latitude, longitude)
+            if (_viewModel.validateEnteredData(newReminder)) {
+                checkPermissionsAndStartGeofencing()
+            }
         }
     }
 
@@ -104,6 +106,18 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
+    private fun checkPermissionsAndStartGeofencing() {
+        if (foregroundAndBackgroundLocationPermissionApproved()) {
+            checkDeviceLocationSettingsAndStartGeofence()
+        } else {
+            requestForegroundAndBackgroundLocationPermissions()
+        }
+    }
+
+    /*
+    *  Uses the Location Client to check the current state of location settings, and gives the user
+    *  the opportunity to turn on location services within our app.
+    */
     private fun checkDeviceLocationSettingsAndStartGeofence(resolve: Boolean = true) {
         val locationRequest = LocationRequest.create().apply {
             priority = LocationRequest.PRIORITY_LOW_POWER
@@ -137,7 +151,40 @@ class SaveReminderFragment : BaseFragment() {
         }
         locationSettingsResponseTask.addOnCompleteListener {
             if (it.isSuccessful) {
+                addGeofenceForReminder()
+            }
+        }
+    }
 
+    private fun addGeofenceForReminder() {
+        // Build the Geofence Object
+        val geofence = Geofence.Builder()
+            .setRequestId(newReminder.id)
+            .setCircularRegion(newReminder.latitude!!,
+                newReminder.longitude!!,
+                GEOFENCE_RADIUS_IN_METERS)
+            .setExpirationDuration(GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+            .build()
+
+        val geofencingRequest = GeofencingRequest.Builder()
+            // The INITIAL_TRIGGER_ENTER flag indicates that geofencing service should trigger a
+            // GEOFENCE_TRANSITION_ENTER notification when the geofence is added and if the device
+            // is already inside that geofence.
+            .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+            .addGeofence(geofence)
+            .build()
+
+        geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
+            addOnSuccessListener {
+                Toast.makeText(requireActivity(), R.string.geofence_added, Toast.LENGTH_SHORT)
+                    .show()
+                Log.e("Add Geofence", geofence.requestId)
+            }
+            addOnFailureListener {
+                Toast.makeText(requireActivity(), R.string.geofences_not_added, Toast.LENGTH_SHORT)
+                    .show()
+                Log.e("Add Geofence Failed", geofence.requestId)
             }
         }
     }
@@ -211,10 +258,6 @@ class SaveReminderFragment : BaseFragment() {
         requestPermissions(permissionsArray, resultCode)
     }
 
-    private fun addGeofence() {
-
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         //make sure to clear the view model after destroy, as it's a single view model.
@@ -230,3 +273,5 @@ private const val FINE_AND_BACKGROUND_LOCATIONS_REQUEST_CODE = 34
 const val TAG = "RemindersActivity"
 private const val LOCATION_PERMISSION_INDEX = 0
 private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
+private val GEOFENCE_EXPIRATION_IN_MILLISECONDS: Long = TimeUnit.HOURS.toMillis(1)
+private const val GEOFENCE_RADIUS_IN_METERS = 100f
