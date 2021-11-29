@@ -264,6 +264,10 @@ class SaveReminderFragment : BaseFragment() {
         _viewModel.onClear()
     }
 
+    companion object {
+        internal const val ACTION_GEOFENCE_EVENT =
+            "SaveReminderFragment.ACTION_GEOFENCE_EVENT"
+    }
 
 }
 
