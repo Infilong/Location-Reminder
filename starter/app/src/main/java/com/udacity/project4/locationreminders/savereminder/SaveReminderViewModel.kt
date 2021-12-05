@@ -1,26 +1,9 @@
 package com.udacity.project4.locationreminders.savereminder
 
-import android.Manifest
-import android.annotation.TargetApi
 import android.app.Application
-import android.content.Intent
-import android.content.IntentSender
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.provider.Settings
-import android.util.Log
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.ui.AppBarConfiguration
-import com.google.android.gms.common.api.ResolvableApiException
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.maps.model.PointOfInterest
-import com.google.android.material.snackbar.Snackbar
-import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseViewModel
 import com.udacity.project4.base.NavigationCommand
@@ -99,7 +82,6 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
         }
         return true
     }
-
 
 
 }
