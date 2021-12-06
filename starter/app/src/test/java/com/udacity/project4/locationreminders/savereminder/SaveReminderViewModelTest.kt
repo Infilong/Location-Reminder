@@ -19,5 +19,5 @@ class SaveReminderViewModelTest {
         val saveReminderViewModel =
             SaveReminderViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
     }
-
 }
+
