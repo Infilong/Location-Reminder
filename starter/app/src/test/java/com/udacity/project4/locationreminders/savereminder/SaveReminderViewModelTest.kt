@@ -4,6 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.udacity.project4.locationreminders.data.FakeDataSource
+import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.hamcrest.CoreMatchers.nullValue
@@ -21,6 +22,7 @@ class SaveReminderViewModelTest {
     private lateinit var fakeDataSource: FakeDataSource
     private lateinit var saveReminderViewModel: SaveReminderViewModel
 
+    //Rule related to livedata test
     @get:Rule
     var instantExecutorRule = InstantTaskExecutorRule()
 
@@ -31,20 +33,17 @@ class SaveReminderViewModelTest {
             SaveReminderViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
     }
 
-    fun getReminder(): ReminderDataItem {
-        return ReminderDataItem(
-            title = "title",
-            description = "description",
-            location = "location",
-            latitude = 100.11,
-            longitude = 90.11
-        )
+
+
+    @Test
+    fun onClear_getNullValue() {
+        saveReminderViewModel.onClear()
+        assertThat(saveReminderViewModel.reminderTitle.value, `is`(nullValue()))
     }
 
     @Test
-    fun onClear() {
-        saveReminderViewModel.onClear()
-        assertThat(saveReminderViewModel.reminderTitle.value, `is`(nullValue()))
+    fun validateEnteredData() {
+
     }
 }
 
