@@ -1,15 +1,19 @@
 package com.udacity.project4.locationreminders.savereminder
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.test.core.app.ApplicationProvider
+import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.PointOfInterest
+import com.udacity.project4.R
+import com.udacity.project4.locationreminders.MainCoroutineRule
 import com.udacity.project4.locationreminders.data.FakeDataSource
-import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import org.hamcrest.CoreMatchers.nullValue
-import org.hamcrest.core.Is.`is`
-import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.`is`
+import org.hamcrest.core.IsNull
+import org.hamcrest.text.IsEmptyString
+import org.junit.Assert.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -26,23 +30,111 @@ class SaveReminderViewModelTest {
     @get:Rule
     var instantExecutorRule = InstantTaskExecutorRule()
 
+    // Set the main coroutines dispatcher for unit testing
+    //reference https://developer.android.com/codelabs/advanced-android-kotlin-training-testing-survey#3
+    @get:Rule
+    var mainCoroutineRule = MainCoroutineRule()
+
     @Before
     fun setViewModel() {
         fakeDataSource = FakeDataSource()
         saveReminderViewModel =
-            SaveReminderViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
+            SaveReminderViewModel(getApplicationContext(), fakeDataSource)
     }
 
-
-
     @Test
-    fun onClear_getNullValue() {
+    fun onClear_clearReminder() {
+        saveReminderViewModel.apply {
+            reminderTitle.value = "title"
+            reminderDescription.value = "description"
+            reminderSelectedLocationStr.value = "location"
+            latitude.value = 100.123
+            longitude.value = 200.123
+            selectedPOI.value =
+                PointOfInterest(LatLng(latitude.value!!, longitude.value!!), "id", "name")
+        }
         saveReminderViewModel.onClear()
-        assertThat(saveReminderViewModel.reminderTitle.value, `is`(nullValue()))
+
+        assertThat(saveReminderViewModel.reminderTitle.value,
+            IsEmptyString.isEmptyOrNullString())
+        assertThat(saveReminderViewModel.reminderDescription.value,
+            IsEmptyString.isEmptyOrNullString())
+        assertThat(saveReminderViewModel.reminderSelectedLocationStr.value,
+            IsEmptyString.isEmptyOrNullString())
+        assertThat(saveReminderViewModel.latitude.value, `is`(IsNull.nullValue()))
+        assertThat(saveReminderViewModel.longitude.value, `is`(IsNull.nullValue()))
+        assertThat(saveReminderViewModel.selectedPOI.value, `is`(IsNull.nullValue()))
     }
 
     @Test
-    fun validateEnteredData() {
+    fun validateEnteredData_titleIsNullOrEmpty() {
+        val reminderTitleIsNull = ReminderDataItem(
+            null,
+            description = "description",
+            location = "location",
+            latitude = 100.123,
+            longitude = 200.123)
+
+        val reminderWithoutTitle = ReminderDataItem(
+            "",
+            description = "description",
+            location = "location",
+            latitude = 100.123,
+            longitude = 200.123)
+
+        saveReminderViewModel.validateEnteredData(reminderTitleIsNull)
+        assertThat(saveReminderViewModel.showSnackBarInt.value,
+            `is`(R.string.err_enter_title))
+
+        saveReminderViewModel.validateEnteredData(reminderWithoutTitle)
+        assertThat(saveReminderViewModel.showSnackBarInt.value,
+            `is`(R.string.err_enter_title))
+    }
+
+    @Test
+    fun validateEnteredData_locationIsNullOrEmpty() {
+        val reminderLocationIsNull = ReminderDataItem(
+            title = "title",
+            description = "description",
+            location = null,
+            latitude = 100.123,
+            longitude = 200.123)
+
+        val reminderLocationIsEmpty = ReminderDataItem(
+            title = "title",
+            description = "description",
+            location = "",
+            latitude = 100.123,
+            longitude = 200.123)
+
+        saveReminderViewModel.validateEnteredData(reminderLocationIsNull)
+        assertThat(saveReminderViewModel.showSnackBarInt.value,
+            `is`(R.string.err_select_location))
+
+        saveReminderViewModel.validateEnteredData(reminderLocationIsEmpty)
+        assertThat(saveReminderViewModel.showSnackBarInt.value,
+            `is`(R.string.err_select_location))
+    }
+
+    @Test
+    fun saveReminder_saveReminderToDataSource() {
+        // reference https://developer.android.com/codelabs/advanced-android-kotlin-training-testing-survey#4
+        // Pause dispatcher so you can verify initial values.
+        mainCoroutineRule.pauseDispatcher()
+        val reminder = ReminderDataItem(
+            title = "title",
+            description = "description",
+            location = "location",
+            latitude = 100.123,
+            longitude = 200.123)
+        saveReminderViewModel.saveReminder(reminder)
+        assertThat(saveReminderViewModel.showLoading.value, `is`(true))
+        // Execute pending coroutines actions.
+        mainCoroutineRule.resumeDispatcher()
+
+        assertThat(saveReminderViewModel.showLoading.value, `is`(false))
+        assertThat(saveReminderViewModel.showToast.value,
+            `is`(saveReminderViewModel.app.getString(R.string.reminder_saved)))
 
     }
 }
