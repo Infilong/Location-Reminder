@@ -14,11 +14,13 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.hamcrest.Matchers.`is`
 import org.hamcrest.core.IsNull
 import org.hamcrest.text.IsEmptyString
+import org.junit.After
 import org.junit.Assert.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.stopKoin
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
@@ -41,6 +43,11 @@ class SaveReminderViewModelTest {
         fakeDataSource = FakeDataSource()
         saveReminderViewModel =
             SaveReminderViewModel(getApplicationContext(), fakeDataSource)
+    }
+
+    @After
+    fun cleanUp() {
+        stopKoin()
     }
 
     @Test

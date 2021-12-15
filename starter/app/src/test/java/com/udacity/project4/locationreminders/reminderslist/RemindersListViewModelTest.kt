@@ -11,11 +11,13 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.hamcrest.MatcherAssert
 import org.hamcrest.core.Is.`is`
 import org.hamcrest.core.IsEqual
+import org.junit.After
 import org.junit.Assert.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.stopKoin
 
 @RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
@@ -39,6 +41,11 @@ class RemindersListViewModelTest {
         fakeDataSource = FakeDataSource()
         remindersListViewModel =
             RemindersListViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
+    }
+
+    @After
+    fun cleanUp() {
+        stopKoin()
     }
 
     @Test
