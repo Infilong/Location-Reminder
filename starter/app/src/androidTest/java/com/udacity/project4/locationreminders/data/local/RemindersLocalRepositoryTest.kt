@@ -44,18 +44,41 @@ class RemindersLocalRepositoryTest {
     @Test
     // runBlocking is used to wait for all suspend functions to finish before continuing with the execution in the block.
     // Note that we're using runBlocking instead of runBlockingTest because of a bug(https://github.com/Kotlin/kotlinx.coroutines/issues/1204).
-    fun getReminders_requestRemindersFromDatabaseSuccess() = runBlocking {
+    fun getReminder_requestRemindersFromDatabaseSuccess() = runBlocking {
         val reminderDTO1 = ReminderDTO("title1", "des1", "loc1", 1.00, 1.00, "1")
         val reminderDTO2 = ReminderDTO("title2", "des2", "loc2", 2.00, 2.00, "2")
         val reminderDTO3 = ReminderDTO("title3", "des3", "loc3", 3.00, 3.00, "3")
-        val dataListDTO = mutableListOf(reminderDTO1, reminderDTO2, reminderDTO3)
+        val dataListDTO = listOf(reminderDTO1, reminderDTO2, reminderDTO3)
 
         remindersLocalRepository.saveReminder(reminderDTO1)
         remindersLocalRepository.saveReminder(reminderDTO2)
         remindersLocalRepository.saveReminder(reminderDTO3)
 
-        val reminders = remindersLocalRepository.getReminders()
+        val reminder1 = remindersLocalRepository.getReminder("1")
+        val reminder2 = remindersLocalRepository.getReminder("2")
+        val reminder3 = remindersLocalRepository.getReminder("3")
 
-        assertThat(reminders == dataListDTO, `is`(true))
+        assertThat(reminder1 == reminderDTO1, `is`(true))
+        assertThat(reminder2 == reminderDTO2, `is`(true))
+        assertThat(reminder3 == reminderDTO2, `is`(true))
+    }
+
+    @Test
+    // runBlocking is used to wait for all suspend functions to finish before continuing with the execution in the block.
+    // Note that we're using runBlocking instead of runBlockingTest because of a bug(https://github.com/Kotlin/kotlinx.coroutines/issues/1204).
+    fun getReminders_requestRemindersFromDatabaseSuccess() = runBlocking {
+        val reminderDTO1 = ReminderDTO("title1", "des1", "loc1", 1.00, 1.00, "1")
+        val reminderDTO2 = ReminderDTO("title2", "des2", "loc2", 2.00, 2.00, "2")
+        val reminderDTO3 = ReminderDTO("title3", "des3", "loc3", 3.00, 3.00, "3")
+        val dataListDTO = listOf(reminderDTO1, reminderDTO2, reminderDTO3)
+
+        remindersLocalRepository.saveReminder(reminderDTO1)
+        remindersLocalRepository.saveReminder(reminderDTO2)
+        remindersLocalRepository.saveReminder(reminderDTO3)
+
+        val reminder = remindersLocalRepository.getReminders()
+
+        assertThat(reminder == reminderDTO1, `is`(true))
+
     }
 }
