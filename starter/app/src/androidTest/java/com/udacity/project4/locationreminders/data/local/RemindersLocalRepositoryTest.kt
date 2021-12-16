@@ -54,7 +54,7 @@ class RemindersLocalRepositoryTest {
         remindersLocalRepository.saveReminder(reminderDTO2)
         remindersLocalRepository.saveReminder(reminderDTO3)
 
-        val reminder1 = remindersLocalRepository.getReminder("1")
+        val reminder1 = remindersLocalRepository.getReminder("1") as Result.Success<ReminderDTO>
         val reminder2 = remindersLocalRepository.getReminder("2")
         val reminder3 = remindersLocalRepository.getReminder("3")
 
