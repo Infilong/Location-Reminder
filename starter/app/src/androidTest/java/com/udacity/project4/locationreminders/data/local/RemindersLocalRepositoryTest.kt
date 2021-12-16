@@ -5,16 +5,19 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
+import com.udacity.project4.locationreminders.data.dto.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.core.IsNull
 import org.junit.After
 import org.junit.Assert.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.internal.matchers.Null
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
@@ -32,6 +35,7 @@ class RemindersLocalRepositoryTest {
             RemindersDatabase::class.java, "locationReminders.db"
         ).build()
 
+        database.clearAllTables()
         remindersLocalRepository =
             RemindersLocalRepository(database.reminderDao(), Dispatchers.Unconfined)
     }
@@ -54,7 +58,7 @@ class RemindersLocalRepositoryTest {
         remindersLocalRepository.saveReminder(reminderDTO2)
         remindersLocalRepository.saveReminder(reminderDTO3)
 
-        val reminder1 = remindersLocalRepository.getReminder("1") as Result.Success<ReminderDTO>
+        val reminder1 = remindersLocalRepository.getReminder("1")
         val reminder2 = remindersLocalRepository.getReminder("2")
         val reminder3 = remindersLocalRepository.getReminder("3")
 
@@ -80,5 +84,17 @@ class RemindersLocalRepositoryTest {
 
         assertThat(reminder == reminderDTO1, `is`(true))
 
+    }
+
+    @Test
+    fun getReminder_requestReminderFromDatabaseFail() = runBlocking{
+        val reminder = remindersLocalRepository.getReminder("1")
+        assertThat(reminder, `is`(Result.Error("Reminder not found!")))
+    }
+
+    @Test
+    fun getReminders_requestRemindersFromDatabaseFail() = runBlocking{
+        val getReminderError = remindersLocalRepository.getReminders()
+        assertThat(getReminderError, `is`(Result.Error("Reminder not found!")))
     }
 }
