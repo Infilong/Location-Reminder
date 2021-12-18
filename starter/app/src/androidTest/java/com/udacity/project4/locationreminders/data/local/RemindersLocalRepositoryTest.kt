@@ -10,11 +10,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.core.IsNull
 import org.junit.After
 import org.junit.Assert.assertThat
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.internal.matchers.Null
@@ -52,7 +50,8 @@ class RemindersLocalRepositoryTest {
         val reminderDTO1 = ReminderDTO("title1", "des1", "loc1", 1.00, 1.00, "1")
         remindersLocalRepository.saveReminder(reminderDTO1)
         val reminder1 = remindersLocalRepository.getReminder("1") as Result.Success<ReminderDTO>
-        assertThat(reminder1 == reminderDTO1, `is`(true))
+
+        assertThat(reminder1.data == reminderDTO1, `is`(true))
     }
 
     @Test
@@ -62,26 +61,45 @@ class RemindersLocalRepositoryTest {
         val reminderDTO1 = ReminderDTO("title1", "des1", "loc1", 1.00, 1.00, "1")
         val reminderDTO2 = ReminderDTO("title2", "des2", "loc2", 2.00, 2.00, "2")
         val reminderDTO3 = ReminderDTO("title3", "des3", "loc3", 3.00, 3.00, "3")
-        val dataListDTO = listOf(reminderDTO1, reminderDTO2, reminderDTO3)
 
         remindersLocalRepository.saveReminder(reminderDTO1)
         remindersLocalRepository.saveReminder(reminderDTO2)
         remindersLocalRepository.saveReminder(reminderDTO3)
 
-        val reminders = remindersLocalRepository.getReminders()
+        val reminders = remindersLocalRepository.getReminders() as Result.Success
 
-        assertThat(reminders == reminderDTO1, `is`(true))
+        assertThat(reminders.data[0] == reminderDTO1, `is`(true))
     }
 
     @Test
-    fun getReminder_requestReminderFromDatabaseFail() = runBlocking{
-        val reminder = remindersLocalRepository.getReminder("1")
+    fun getReminder_requestReminderFromDatabaseFail() = runBlocking {
+        val reminder = remindersLocalRepository.getReminder("1") as Result.Error
         assertThat(reminder, `is`(Result.Error("Reminder not found!")))
     }
 
     @Test
-    fun getReminders_requestRemindersFromDatabaseFail() = runBlocking{
-        val getReminderError = remindersLocalRepository.getReminders()
-        assertThat(getReminderError, `is`(Result.Error("Reminder not found!")))
+    fun saveReminder() = runBlocking {
+        val reminderDTO1 = ReminderDTO("title1", "des1", "loc1", 1.00, 1.00, "1")
+        remindersLocalRepository.saveReminder(reminderDTO1)
+        val reminder = remindersLocalRepository.getReminder("1") as Result.Success<ReminderDTO>
+        assertThat(reminder.data == reminderDTO1, `is`(true))
+    }
+
+    @Test
+    // runBlocking is used to wait for all suspend functions to finish before continuing with the execution in the block.
+    // Note that we're using runBlocking instead of runBlockingTest because of a bug(https://github.com/Kotlin/kotlinx.coroutines/issues/1204).
+    fun deleteAllReminders() = runBlocking {
+        val reminderDTO1 = ReminderDTO("title1", "des1", "loc1", 1.00, 1.00, "1")
+        val reminderDTO2 = ReminderDTO("title2", "des2", "loc2", 2.00, 2.00, "2")
+        val reminderDTO3 = ReminderDTO("title3", "des3", "loc3", 3.00, 3.00, "3")
+
+        remindersLocalRepository.saveReminder(reminderDTO1)
+        remindersLocalRepository.saveReminder(reminderDTO2)
+        remindersLocalRepository.saveReminder(reminderDTO3)
+
+        remindersLocalRepository.deleteAllReminders()
+
+        val reminder = remindersLocalRepository.getReminder("1") as Result.Error
+        assertThat(reminder, `is`(Result.Error("Reminder not found!")))
     }
 }
