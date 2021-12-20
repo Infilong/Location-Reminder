@@ -22,7 +22,7 @@ import org.mockito.internal.matchers.Null
 //Medium Test to test the repository
 @MediumTest
 class RemindersLocalRepositoryTest {
-    //    Add testing implementation to the RemindersLocalRepository.kt
+    // Add testing implementation to the RemindersLocalRepository.kt
     private lateinit var remindersLocalRepository: RemindersLocalRepository
     private lateinit var database: RemindersDatabase
 
@@ -69,6 +69,8 @@ class RemindersLocalRepositoryTest {
         val reminders = remindersLocalRepository.getReminders() as Result.Success
 
         assertThat(reminders.data[0] == reminderDTO1, `is`(true))
+        assertThat(reminders.data[1] == reminderDTO2, `is`(true))
+        assertThat(reminders.data[2] == reminderDTO3, `is`(true))
     }
 
     @Test
@@ -78,7 +80,7 @@ class RemindersLocalRepositoryTest {
     }
 
     @Test
-    fun saveReminder() = runBlocking {
+    fun saveReminder_reminderSaved() = runBlocking {
         val reminderDTO1 = ReminderDTO("title1", "des1", "loc1", 1.00, 1.00, "1")
         remindersLocalRepository.saveReminder(reminderDTO1)
         val reminder = remindersLocalRepository.getReminder("1") as Result.Success<ReminderDTO>
@@ -88,7 +90,7 @@ class RemindersLocalRepositoryTest {
     @Test
     // runBlocking is used to wait for all suspend functions to finish before continuing with the execution in the block.
     // Note that we're using runBlocking instead of runBlockingTest because of a bug(https://github.com/Kotlin/kotlinx.coroutines/issues/1204).
-    fun deleteAllReminders() = runBlocking {
+    fun deleteAllReminders_noRemindersLeft() = runBlocking {
         val reminderDTO1 = ReminderDTO("title1", "des1", "loc1", 1.00, 1.00, "1")
         val reminderDTO2 = ReminderDTO("title2", "des2", "loc2", 2.00, 2.00, "2")
         val reminderDTO3 = ReminderDTO("title3", "des3", "loc3", 3.00, 3.00, "3")
