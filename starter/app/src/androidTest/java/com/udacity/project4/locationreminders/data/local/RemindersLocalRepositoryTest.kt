@@ -16,6 +16,10 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.internal.matchers.Null
+import org.junit.rules.ExpectedException
+
+import org.junit.Rule
+import android.content.res.Resources.NotFoundException
 
 @ExperimentalCoroutinesApi
 @RunWith(AndroidJUnit4::class)
@@ -28,9 +32,9 @@ class RemindersLocalRepositoryTest {
 
     @Before
     fun createRepository() {
-        database = Room.databaseBuilder(
+        database = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
-            RemindersDatabase::class.java, "locationReminders.db"
+            RemindersDatabase::class.java
         ).build()
 
         database.clearAllTables()
@@ -74,7 +78,13 @@ class RemindersLocalRepositoryTest {
     }
 
     @Test
-    fun getReminder_requestReminderFromDatabaseFail() = runBlocking {
+    fun getReminder_requestReminderFromDatabaseException() = runBlocking {
+        val reminder = remindersLocalRepository.getReminder("1") as Result.Error
+        assertThat(reminder, `is`(Result.Error("Reminder not found!")))
+    }
+
+    @Test
+    fun getReminders_requestRemindersFromDatabaseException() = runBlocking {
         val reminder = remindersLocalRepository.getReminder("1") as Result.Error
         assertThat(reminder, `is`(Result.Error("Reminder not found!")))
     }
