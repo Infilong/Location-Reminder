@@ -68,7 +68,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
 //       call this function after the user confirms on the selected location
-        binding.saveButton.setOnClickListener {
+        binding.selectLocationSaveButton.setOnClickListener {
             onLocationSelected()
         }
 
@@ -76,6 +76,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         return binding.root
     }
 
+    @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         //Show current location blue dot

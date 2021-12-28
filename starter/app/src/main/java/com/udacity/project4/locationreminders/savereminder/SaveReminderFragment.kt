@@ -1,6 +1,7 @@
 package com.udacity.project4.locationreminders.savereminder
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.app.PendingIntent
 import android.content.Intent
@@ -154,8 +155,8 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun addGeofenceForReminder() {
-        // Build the Geofence Object
         val geofence = Geofence.Builder()
             .setRequestId(newReminder.id)
             .setCircularRegion(newReminder.latitude!!,
@@ -177,12 +178,13 @@ class SaveReminderFragment : BaseFragment() {
             addOnSuccessListener {
                 Toast.makeText(requireActivity(), R.string.geofence_added, Toast.LENGTH_SHORT)
                     .show()
-                Log.e("Add Geofence", geofence.requestId)
+                if (geofence != null) {
+                    Log.e("Add Geofence", geofence.requestId)
+                }
             }
             addOnFailureListener {
                 Toast.makeText(requireActivity(), R.string.geofences_not_added, Toast.LENGTH_SHORT)
                     .show()
-                Log.e("Add Geofence Failed", geofence.requestId)
             }
         }
     }
