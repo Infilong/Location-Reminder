@@ -77,16 +77,6 @@ class SaveReminderFragment : BaseFragment() {
         }
 
         binding.saveReminder.setOnClickListener {
-            val title = _viewModel.reminderTitle.value
-            val description = _viewModel.reminderDescription.value
-            val location = _viewModel.reminderSelectedLocationStr.value
-            val latitude = _viewModel.latitude.value
-            val longitude = _viewModel.longitude.value
-
-//            use the user entered reminder details to:
-//             1) add a geofencing request
-//             2) save the reminder to the local db
-            newReminder = ReminderDataItem(title, description, location, latitude, longitude)
             checkPermissionsAndStartGeofencing()
             _viewModel.validateAndSaveReminder(newReminder)
         }
@@ -157,34 +147,49 @@ class SaveReminderFragment : BaseFragment() {
 
     @SuppressLint("MissingPermission")
     private fun addGeofenceForReminder() {
-        val geofence = Geofence.Builder()
-            .setRequestId(newReminder.id)
-            .setCircularRegion(newReminder.latitude!!,
-                newReminder.longitude!!,
-                GEOFENCE_RADIUS_IN_METERS)
-            .setExpirationDuration(GEOFENCE_EXPIRATION_IN_MILLISECONDS)
-            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
-            .build()
+        val title = _viewModel.reminderTitle.value
+        val description = _viewModel.reminderDescription.value
+        val location = _viewModel.reminderSelectedLocationStr.value
+        val latitude = _viewModel.latitude.value
+        val longitude = _viewModel.longitude.value
 
-        val geofencingRequest = GeofencingRequest.Builder()
-            // The INITIAL_TRIGGER_ENTER flag indicates that geofencing service should trigger a
-            // GEOFENCE_TRANSITION_ENTER notification when the geofence is added and if the device
-            // is already inside that geofence.
-            .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-            .addGeofence(geofence)
-            .build()
+//            use the user entered reminder details to:
+//             1) add a geofencing request
+//             2) save the reminder to the local db
+        newReminder = ReminderDataItem(title, description, location, latitude, longitude)
 
-        geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
-            addOnSuccessListener {
-                Toast.makeText(requireActivity(), R.string.geofence_added, Toast.LENGTH_SHORT)
-                    .show()
-                if (geofence != null) {
-                    Log.e("Add Geofence", geofence.requestId)
+        if (_viewModel.validateEnteredData(newReminder)) {
+            val geofence = Geofence.Builder()
+                .setRequestId(newReminder.id)
+                .setCircularRegion(newReminder.latitude!!,
+                    newReminder.longitude!!,
+                    GEOFENCE_RADIUS_IN_METERS)
+                .setExpirationDuration(GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+                .build()
+
+            val geofencingRequest = GeofencingRequest.Builder()
+                // The INITIAL_TRIGGER_ENTER flag indicates that geofencing service should trigger a
+                // GEOFENCE_TRANSITION_ENTER notification when the geofence is added and if the device
+                // is already inside that geofence.
+                .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+                .addGeofence(geofence)
+                .build()
+
+            geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
+                addOnSuccessListener {
+                    Toast.makeText(requireActivity(), R.string.geofence_added, Toast.LENGTH_SHORT)
+                        .show()
+                    if (geofence != null) {
+                        Log.e("Add Geofence", geofence.requestId)
+                    }
                 }
-            }
-            addOnFailureListener {
-                Toast.makeText(requireActivity(), R.string.geofences_not_added, Toast.LENGTH_SHORT)
-                    .show()
+                addOnFailureListener {
+                    Toast.makeText(requireActivity(),
+                        R.string.geofences_not_added,
+                        Toast.LENGTH_SHORT)
+                        .show()
+                }
             }
         }
     }

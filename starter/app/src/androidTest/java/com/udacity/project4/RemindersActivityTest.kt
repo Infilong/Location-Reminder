@@ -83,7 +83,7 @@ class RemindersActivityTest :
 
     //    add End to End testing to the app
     @Test
-    fun addNewReminder() = runBlocking {
+    fun addNewReminder_verifyNewReminderAdded() = runBlocking {
         // Set initial state.
         val reminderDTO1 = ReminderDTO("title1", "des1", "loc1", 1.00, 1.00, "1")
         repository.saveReminder(reminderDTO1)
@@ -103,5 +103,10 @@ class RemindersActivityTest :
         assertThat((repository.getReminders() as Result.Success).data.size, `is`(1))
         // Make sure the activity is closed before resetting the db:
         activityScenario.close()
+    }
+
+    @Test
+    fun snackbarAndToast_verifySnackbarAndToast() = runBlocking {
+
     }
 }
