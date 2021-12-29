@@ -77,8 +77,21 @@ class SaveReminderFragment : BaseFragment() {
         }
 
         binding.saveReminder.setOnClickListener {
-            checkPermissionsAndStartGeofencing()
-            _viewModel.validateAndSaveReminder(newReminder)
+            val title = _viewModel.reminderTitle.value
+            val description = _viewModel.reminderDescription.value
+            val location = _viewModel.reminderSelectedLocationStr.value
+            val latitude = _viewModel.latitude.value
+            val longitude = _viewModel.longitude.value
+
+//            use the user entered reminder details to:
+//             1) add a geofencing request
+//             2) save the reminder to the local db
+            newReminder = ReminderDataItem(title, description, location, latitude, longitude)
+            _viewModel.validateEnteredData(newReminder)
+            if (newReminder.latitude != null && newReminder.longitude != null) {
+                _viewModel.saveReminder(newReminder)
+                checkPermissionsAndStartGeofencing()
+            }
         }
     }
 
@@ -147,17 +160,6 @@ class SaveReminderFragment : BaseFragment() {
 
     @SuppressLint("MissingPermission")
     private fun addGeofenceForReminder() {
-        val title = _viewModel.reminderTitle.value
-        val description = _viewModel.reminderDescription.value
-        val location = _viewModel.reminderSelectedLocationStr.value
-        val latitude = _viewModel.latitude.value
-        val longitude = _viewModel.longitude.value
-
-//            use the user entered reminder details to:
-//             1) add a geofencing request
-//             2) save the reminder to the local db
-        newReminder = ReminderDataItem(title, description, location, latitude, longitude)
-
         if (_viewModel.validateEnteredData(newReminder)) {
             val geofence = Geofence.Builder()
                 .setRequestId(newReminder.id)
