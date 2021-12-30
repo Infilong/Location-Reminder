@@ -1,5 +1,6 @@
 package com.udacity.project4
 
+import android.app.Activity
 import android.app.Application
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
@@ -7,11 +8,13 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.replaceText
 import androidx.test.espresso.assertion.ViewAssertions
+import androidx.test.espresso.matcher.RootMatchers
+import androidx.test.espresso.matcher.RootMatchers.withDecorView
 import androidx.test.espresso.matcher.ViewMatchers
-import androidx.test.espresso.matcher.ViewMatchers.assertThat
-import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import com.google.android.material.internal.ContextUtils.getActivity
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
@@ -32,6 +35,8 @@ import org.koin.test.AutoCloseKoinTest
 import org.hamcrest.CoreMatchers.`is`
 import com.udacity.project4.locationreminders.data.dto.Result
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
+import org.hamcrest.CoreMatchers
+import org.hamcrest.core.Is
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -98,26 +103,66 @@ class RemindersActivityTest :
         onView(withId(R.id.addReminderFAB)).perform(click())
         onView(withId(R.id.reminderTitle)).perform(replaceText("title"))
         onView(withId(R.id.reminderDescription)).perform(replaceText("des"))
-        onView(withId(R.id.selectLocation)).perform(click())
-        onView(withId(R.id.select_location_save_button)).perform(click())
+        onView(withId(R.id.selectedLocation)).perform(replaceText("loc"))
         onView(withId(R.id.saveReminder)).perform(click())
 
         // Verify the result
+        onView(withText(R.string.reminder_saved))
+            .inRoot(withDecorView(CoreMatchers.not(`is`(getActivity(activityScenario)?.window?.decorView)))).check(
+                ViewAssertions.matches(isDisplayed()))
+
         assertThat((repository.getReminders() as Result.Success).data.size, `is`(1))
+
         // Make sure the activity is closed before resetting the db:
         activityScenario.close()
     }
 
+    private fun getActivity(activityScenario: ActivityScenario<RemindersActivity>): Activity? {
+        var activity: Activity? = null
+        activityScenario.onActivity {
+            activity = it
+        }
+        return activity
+    }
+
     @Test
-    fun snackbar_verifySnackbar() = runBlocking {
+    fun snackbar_verifyTitleMissingSnackbar() = runBlocking {
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
 
-        //Verify title missing snackbar
         onView(withId(R.id.addReminderFAB)).perform(click())
-        onView(withId(R.id.select_location_save_button)).perform(click())
+        onView(withId(R.id.saveReminder)).perform(click())
 
         onView(withId(com.google.android.material.R.id.snackbar_text))
-            .check(ViewAssertions.matches(ViewMatchers.withText(R.string.err_enter_title)))
+            .check(ViewAssertions.matches(withText(R.string.err_enter_title)))
+
+        activityScenario.close()
+    }
+
+    @Test
+    fun snackbar_verifyDescriptionMissingSnackbar() = runBlocking {
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.reminderTitle)).perform(replaceText("title"))
+        onView(withId(R.id.saveReminder)).perform(click())
+
+        onView(withId(com.google.android.material.R.id.snackbar_text))
+            .check(ViewAssertions.matches(withText(R.string.err_enter_description)))
+
+        activityScenario.close()
+    }
+
+    @Test
+    fun snackbar_verifyLocationMissingSnackbar() = runBlocking {
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.reminderTitle)).perform(replaceText("title"))
+        onView(withId(R.id.reminderDescription)).perform(replaceText("des"))
+        onView(withId(R.id.saveReminder)).perform(click())
+
+        onView(withId(com.google.android.material.R.id.snackbar_text))
+            .check(ViewAssertions.matches(withText(R.string.err_select_location)))
 
         activityScenario.close()
     }
