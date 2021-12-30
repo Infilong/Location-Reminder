@@ -6,6 +6,8 @@ import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.assertion.ViewAssertions
+import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.assertThat
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -29,6 +31,7 @@ import org.koin.dsl.module
 import org.koin.test.AutoCloseKoinTest
 import org.hamcrest.CoreMatchers.`is`
 import com.udacity.project4.locationreminders.data.dto.Result
+import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -93,8 +96,8 @@ class RemindersActivityTest :
 
         // Espresso code will go here.
         onView(withId(R.id.addReminderFAB)).perform(click())
-        onView(withId(R.id.reminderTitle)).perform(replaceText("title1"))
-        onView(withId(R.id.reminderDescription)).perform(replaceText("des1"))
+        onView(withId(R.id.reminderTitle)).perform(replaceText("title"))
+        onView(withId(R.id.reminderDescription)).perform(replaceText("des"))
         onView(withId(R.id.selectLocation)).perform(click())
         onView(withId(R.id.select_location_save_button)).perform(click())
         onView(withId(R.id.saveReminder)).perform(click())
@@ -106,7 +109,16 @@ class RemindersActivityTest :
     }
 
     @Test
-    fun snackbarAndToast_verifySnackbarAndToast() = runBlocking {
+    fun snackbar_verifySnackbar() = runBlocking {
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
 
+        //Verify title missing snackbar
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.select_location_save_button)).perform(click())
+
+        onView(withId(com.google.android.material.R.id.snackbar_text))
+            .check(ViewAssertions.matches(ViewMatchers.withText(R.string.err_enter_title)))
+
+        activityScenario.close()
     }
 }
