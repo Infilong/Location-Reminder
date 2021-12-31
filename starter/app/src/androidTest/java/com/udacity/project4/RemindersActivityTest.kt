@@ -6,8 +6,7 @@ import androidx.test.InstrumentationRegistry.getInstrumentation
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.action.ViewActions.replaceText
+import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.matcher.RootMatchers
 import androidx.test.espresso.matcher.RootMatchers.withDecorView
@@ -102,29 +101,14 @@ class RemindersActivityTest :
         onView(withId(R.id.reminderTitle)).perform(replaceText("title"))
         onView(withId(R.id.reminderDescription)).perform(replaceText("des"))
         onView(withId(R.id.selectLocation)).perform(click())
-        val device = UiDevice.getInstance(getInstrumentation())
-        device.swipe(37.42206582174193.toInt(), 13.443535038592412.toInt(), 200)
-
-
+        onView(withId(R.id.map)).perform(longClick())
+        onView(withId(R.id.select_location_save_button)).perform(click())
         onView(withId(R.id.saveReminder)).perform(click())
-
-        // Verify the result
-        onView(withText(R.string.reminder_saved))
-            .inRoot(withDecorView(CoreMatchers.not(`is`(getActivity(activityScenario)?.window?.decorView)))).check(
-                ViewAssertions.matches(isDisplayed()))
 
         assertThat((repository.getReminders() as Result.Success).data.size, `is`(1))
 
         // Make sure the activity is closed before resetting the db:
         activityScenario.close()
-    }
-
-    private fun getActivity(activityScenario: ActivityScenario<RemindersActivity>): Activity? {
-        var activity: Activity? = null
-        activityScenario.onActivity {
-            activity = it
-        }
-        return activity
     }
 
     @Test
