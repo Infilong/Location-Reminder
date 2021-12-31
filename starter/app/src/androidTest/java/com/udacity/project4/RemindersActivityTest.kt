@@ -2,6 +2,7 @@ package com.udacity.project4
 
 import android.app.Activity
 import android.app.Application
+import androidx.test.InstrumentationRegistry.getInstrumentation
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.onView
@@ -14,6 +15,7 @@ import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import androidx.test.uiautomator.UiDevice
 import com.google.android.material.internal.ContextUtils.getActivity
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
@@ -92,10 +94,6 @@ class RemindersActivityTest :
     //    add End to End testing to the app
     @Test
     fun addNewReminder_verifyNewReminderAdded() = runBlocking {
-        // Set initial state.
-        val reminderDTO1 = ReminderDTO("title1", "des1", "loc1", 1.00, 1.00, "1")
-        repository.saveReminder(reminderDTO1)
-
         // Start up Tasks screen.
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
 
@@ -103,7 +101,11 @@ class RemindersActivityTest :
         onView(withId(R.id.addReminderFAB)).perform(click())
         onView(withId(R.id.reminderTitle)).perform(replaceText("title"))
         onView(withId(R.id.reminderDescription)).perform(replaceText("des"))
-        onView(withId(R.id.selectedLocation)).perform(replaceText("loc"))
+        onView(withId(R.id.selectLocation)).perform(click())
+        val device = UiDevice.getInstance(getInstrumentation())
+        device.swipe(37.42206582174193.toInt(), 13.443535038592412.toInt(), 200)
+
+
         onView(withId(R.id.saveReminder)).perform(click())
 
         // Verify the result
