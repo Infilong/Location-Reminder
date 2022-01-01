@@ -1,30 +1,19 @@
 package com.udacity.project4
 
-import android.app.Activity
 import android.app.Application
-import android.content.Context
-import androidx.lifecycle.Transformations.map
-import androidx.test.InstrumentationRegistry.getInstrumentation
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions
-import androidx.test.espresso.matcher.RootMatchers
-import androidx.test.espresso.matcher.RootMatchers.withDecorView
-import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
-import androidx.test.uiautomator.UiDevice
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.material.internal.ContextUtils.getActivity
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
-import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
 import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
@@ -41,9 +30,6 @@ import org.koin.dsl.module
 import org.koin.test.AutoCloseKoinTest
 import org.hamcrest.CoreMatchers.`is`
 import com.udacity.project4.locationreminders.data.dto.Result
-import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
-import org.hamcrest.CoreMatchers
-import org.hamcrest.core.Is
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -53,7 +39,6 @@ class RemindersActivityTest :
 
     private lateinit var repository: ReminderDataSource
     private lateinit var appContext: Application
-    private lateinit var map: GoogleMap
 
     /**
      * As we use Koin as a Service Locator Library to develop our code, we'll also use Koin to test our code.
@@ -99,20 +84,18 @@ class RemindersActivityTest :
 
     //    add End to End testing to the app
     @Test
-    fun addNewReminder_verifyNewReminderAdded(googleMap: GoogleMap) = runBlocking {
+    fun addNewReminder_verifyNewReminderAdded() = runBlocking {
         // Start up Tasks screen.
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
 
         val testPosition = LatLng(34.397, 120.644);
-        map = googleMap
-        map.addMarker(MarkerOptions().position(testPosition).title("Test Position"))
 
         // Espresso code will go here.
         onView(withId(R.id.addReminderFAB)).perform(click())
         onView(withId(R.id.reminderTitle)).perform(replaceText("title"))
         onView(withId(R.id.reminderDescription)).perform(replaceText("des"))
         onView(withId(R.id.selectLocation)).perform(click())
-        //onView(withId(R.id.map)).perform(longClick())
+        onView(withId(R.id.map)).perform(longClick())
 
         onView(withId(R.id.select_location_save_button)).perform(click())
         onView(withId(R.id.saveReminder)).perform(click())

@@ -114,11 +114,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 latLng.longitude
             )
             map.clear()
-            map.addMarker(MarkerOptions()
+            val randomMarker = map.addMarker(MarkerOptions()
                 .position(latLng)
                 .title(getString(R.string.dropped_pin))
                 .snippet(snippet)
             )
+            marker = randomMarker
         }
     }
 
