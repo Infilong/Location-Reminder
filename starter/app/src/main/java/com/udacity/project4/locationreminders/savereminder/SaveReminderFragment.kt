@@ -136,7 +136,7 @@ class SaveReminderFragment : BaseFragment() {
         }
         val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
 
-        val settingsClient = LocationServices.getSettingsClient(requireActivity())
+        val settingsClient = LocationServices.getSettingsClient(contxt)
         val locationSettingsResponseTask =
             settingsClient.checkLocationSettings(builder.build())
 
@@ -190,14 +190,14 @@ class SaveReminderFragment : BaseFragment() {
 
             geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
                 addOnSuccessListener {
-                    Toast.makeText(requireActivity(), R.string.geofence_added, Toast.LENGTH_SHORT)
+                    Toast.makeText(contxt, R.string.geofence_added, Toast.LENGTH_SHORT)
                         .show()
                     if (geofence != null) {
                         Log.e("Add Geofence", geofence.requestId)
                     }
                 }
                 addOnFailureListener {
-                    Toast.makeText(requireActivity(),
+                    Toast.makeText(contxt,
                         R.string.geofences_not_added,
                         Toast.LENGTH_SHORT)
                         .show()
