@@ -3,6 +3,7 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 import android.annotation.SuppressLint
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
@@ -38,6 +39,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     //data held by SaveReminderViewModel is synced across SaveReminderFragment and SelectLocationFragment
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSelectLocationBinding
+    private lateinit var contxt: Context
 
     private lateinit var map: GoogleMap
     private val TAG = SelectLocationFragment::class.java.simpleName
@@ -74,6 +76,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         zoomCurrentLocation()
         return binding.root
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        contxt = context
     }
 
     @SuppressLint("MissingPermission")
@@ -138,7 +145,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private fun isPermissionGranted(): Boolean {
         return ContextCompat.checkSelfPermission(
-            requireContext(),
+            contxt,
             android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
 

@@ -1,5 +1,6 @@
 package com.udacity.project4.locationreminders.reminderslist
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.*
@@ -20,6 +21,7 @@ class ReminderListFragment() : BaseFragment() {
     override val _viewModel: RemindersListViewModel by viewModel()
 
     private lateinit var binding: FragmentReminderListBinding
+    private lateinit var contxt: Context
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -39,6 +41,11 @@ class ReminderListFragment() : BaseFragment() {
         binding.refreshLayout.setOnRefreshListener { _viewModel.loadReminders() }
 
         return binding.root
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        contxt = context
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -77,7 +84,7 @@ class ReminderListFragment() : BaseFragment() {
         when (item.itemId) {
             R.id.logout -> {
                 //Sign out implementation
-                AuthUI.getInstance().signOut(requireContext())
+                AuthUI.getInstance().signOut(contxt)
                     .addOnSuccessListener {
                         val logOutIntent = Intent(activity, AuthenticationActivity::class.java)
                         //FLAG_ACTIVITY_CLEAR_TOP,https://developer.android.com/reference/android/content/Intent#FLAG_ACTIVITY_CLEAR_TOP
