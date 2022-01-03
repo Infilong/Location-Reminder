@@ -45,6 +45,7 @@ class SaveReminderFragment : BaseFragment() {
         val intent = Intent(contxt, GeofenceBroadcastReceiver::class.java)
         // Use FLAG_UPDATE_CURRENT so that you get the same pending intent back when calling
         // addGeofences() and removeGeofences().
+        intent.action = ACTION_GEOFENCE_EVENT
         PendingIntent.getBroadcast(contxt, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
     private lateinit var geofencingClient: GeofencingClient
@@ -82,6 +83,8 @@ class SaveReminderFragment : BaseFragment() {
             //            Navigate to another fragment to get the user location
             _viewModel.navigationCommand.value =
                 NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
+            // Request location permission only when the app needs it
+            requestForegroundAndBackgroundLocationPermissions()
         }
 
         binding.saveReminder.setOnClickListener {
@@ -97,17 +100,12 @@ class SaveReminderFragment : BaseFragment() {
             newReminder = ReminderDataItem(title, description, location, latitude, longitude)
 
             if (newReminder.latitude != null && newReminder.longitude != null && _viewModel.validateEnteredData(newReminder)) {
-                _viewModel.saveReminder(newReminder)
                 checkPermissionsAndStartGeofencing()
+                _viewModel.saveReminder(newReminder)
             } else {
                 _viewModel.validateEnteredData(newReminder)
             }
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        requestForegroundAndBackgroundLocationPermissions()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -192,15 +190,16 @@ class SaveReminderFragment : BaseFragment() {
                 addOnSuccessListener {
                     Toast.makeText(contxt, R.string.geofence_added, Toast.LENGTH_SHORT)
                         .show()
-                    if (geofence != null) {
-                        Log.e("Add Geofence", geofence.requestId)
-                    }
+                    Log.e("Add Geofence", geofence.requestId)
                 }
                 addOnFailureListener {
                     Toast.makeText(contxt,
                         R.string.geofences_not_added,
                         Toast.LENGTH_SHORT)
                         .show()
+                    if ((it.message != null)) {
+                        Log.w(TAG, it.message)
+                    }
                 }
             }
         }
@@ -229,7 +228,7 @@ class SaveReminderFragment : BaseFragment() {
                     })
                 }.show()
         } else {
-            requestForegroundAndBackgroundLocationPermissions()
+            checkDeviceLocationSettingsAndStartGeofence()
         }
     }
 

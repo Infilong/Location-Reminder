@@ -88,8 +88,6 @@ class RemindersActivityTest :
         // Start up Tasks screen.
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
 
-        val testPosition = LatLng(34.397, 120.644);
-
         // Espresso code will go here.
         onView(withId(R.id.addReminderFAB)).perform(click())
         onView(withId(R.id.reminderTitle)).perform(replaceText("title"))
