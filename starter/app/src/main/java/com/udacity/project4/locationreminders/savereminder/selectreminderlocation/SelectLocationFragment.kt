@@ -1,11 +1,11 @@
 package com.udacity.project4.locationreminders.savereminder.selectreminderlocation
 
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.annotation.TargetApi
 import android.app.Activity
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.location.Location
@@ -18,17 +18,18 @@ import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
-import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import org.koin.android.ext.android.inject
 import java.util.*
@@ -41,6 +42,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var contxt: Context
+    private val runningQOrLater =
+        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
 
     private lateinit var map: GoogleMap
     private val TAG = SelectLocationFragment::class.java.simpleName
@@ -75,6 +78,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             onLocationSelected()
         }
 
+        requestForegroundAndBackgroundLocationPermissions()
+
         zoomCurrentLocation()
         return binding.root
     }
@@ -88,7 +93,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         //Show current location blue dot
-        if (isPermissionGranted()){
+        if (isPermissionGranted()) {
             map.isMyLocationEnabled = true
         }
 
@@ -237,5 +242,48 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             true
         }
         else -> super.onOptionsItemSelected(item)
+    }
+
+    /*
+    *  Determines whether the app has the appropriate permissions across Android 10+ and all other
+    *  Android versions.This app need foreground and background location permission to work.
+    */
+    @TargetApi(29)
+    fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
+        val foregroundLocationApproved =
+            (PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(requireActivity(),
+                Manifest.permission.ACCESS_FINE_LOCATION))
+
+        val backgroundPermissionApproved = if (runningQOrLater) {
+            PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(requireActivity(),
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        } else {
+            true
+        }
+        return foregroundLocationApproved && backgroundPermissionApproved
+    }
+
+    /*
+     *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
+     */
+    @TargetApi(29)
+    fun requestForegroundAndBackgroundLocationPermissions() {
+        if (foregroundAndBackgroundLocationPermissionApproved()) {
+            return
+        }
+        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        val resultCode = when {
+            runningQOrLater -> {
+                permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                33
+            }
+            else -> {
+                34
+            }
+        }
+        Log.i(com.udacity.project4.locationreminders.savereminder.TAG,
+            "Request foreground and background location permission")
+        //Request permissions passing in the current activity, the permissions array and the result code.
+        requestPermissions(permissionsArray, resultCode)
     }
 }

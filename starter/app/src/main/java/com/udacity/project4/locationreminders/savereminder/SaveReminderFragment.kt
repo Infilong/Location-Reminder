@@ -16,6 +16,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.common.api.ResolvableApiException
@@ -54,6 +56,14 @@ class SaveReminderFragment : BaseFragment() {
 
     private lateinit var contxt: Context
 
+    private val resultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == TURN_DEVICE_LOCATION_ON_REQUEST_CODE) {
+            checkDeviceLocationSettingsAndStartGeofence(resolve = true)
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -83,8 +93,6 @@ class SaveReminderFragment : BaseFragment() {
             //            Navigate to another fragment to get the user location
             _viewModel.navigationCommand.value =
                 NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
-            // Request location permission only when the app needs it
-            requestForegroundAndBackgroundLocationPermissions()
         }
 
         binding.saveReminder.setOnClickListener {
@@ -99,7 +107,9 @@ class SaveReminderFragment : BaseFragment() {
 //             2) save the reminder to the local db
             newReminder = ReminderDataItem(title, description, location, latitude, longitude)
 
-            if (newReminder.latitude != null && newReminder.longitude != null && _viewModel.validateEnteredData(newReminder)) {
+            if (newReminder.latitude != null && newReminder.longitude != null && _viewModel.validateEnteredData(
+                    newReminder)
+            ) {
                 checkPermissionsAndStartGeofencing()
                 _viewModel.saveReminder(newReminder)
             } else {
@@ -139,16 +149,49 @@ class SaveReminderFragment : BaseFragment() {
             settingsClient.checkLocationSettings(builder.build())
 
         locationSettingsResponseTask.addOnFailureListener { exception ->
+            //Unlike what's taught in this lesson ("Check Device Location"),
+            // where Exception.startResolutionForResult() is called in an activity to show the location settings dialog,
+            // here we are actually in a fragment. In fragments, we should instead call the fragment equivalent
+//            private fun checkDeviceLocationSettingsAndStartGeofence(resolve:Boolean = true) {
+//                val locationRequest = LocationRequest.create().apply {
+//                    priority = LocationRequest.PRIORITY_LOW_POWER
+//                }
+//                val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+//                val settingsClient = LocationServices.getSettingsClient(this)
+//                val locationSettingsResponseTask =
+//                    settingsClient.checkLocationSettings(builder.build())
+//                locationSettingsResponseTask.addOnFailureListener { exception ->
+//                    if (exception is ResolvableApiException && resolve){
+//                        try {
+//                            exception.startResolutionForResult(this@HuntMainActivity,
+//                                REQUEST_TURN_DEVICE_LOCATION_ON)
+//                        } catch (sendEx: IntentSender.SendIntentException) {
+//                            Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
+//                        }
+//                    } else {
+//                        Snackbar.make(
+//                            binding.activityMapsMain,
+//                            R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+//                        ).setAction(android.R.string.ok) {
+//                            checkDeviceLocationSettingsAndStartGeofence()
+//                        }.show()
+//                    }
+//                }
+//                locationSettingsResponseTask.addOnCompleteListener {
+//                    if ( it.isSuccessful ) {
+//                        addGeofenceForClue()
+//                    }
+//                }
+//            }
+
+            // In fragments, we should instead call the fragment equivalent
             if (exception is ResolvableApiException && resolve) {
-                // Location settings are not satisfied, but this can be fixed
-                // by showing the user a dialog.
                 try {
-                    // Show the dialog by calling startResolutionForResult(),
-                    // and check the result in onActivityResult().
-                    exception.startResolutionForResult(requireActivity(),
-                        TURN_DEVICE_LOCATION_ON_REQUEST_CODE)
+                    val intentSenderRequest =
+                        IntentSenderRequest.Builder(exception.resolution).build()
+                    resultLauncher.launch(intentSenderRequest)
                 } catch (sendEx: IntentSender.SendIntentException) {
-                    Log.d(TAG, "Error geting location settings resolution: " + sendEx.message)
+                    Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
                 }
             } else {
                 Snackbar.make(
@@ -237,7 +280,7 @@ class SaveReminderFragment : BaseFragment() {
     *  Android versions.This app need foreground and background location permission to work.
     */
     @TargetApi(29)
-    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
+    fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
         val foregroundLocationApproved =
             (PackageManager.PERMISSION_GRANTED == checkSelfPermission(requireActivity(),
                 Manifest.permission.ACCESS_FINE_LOCATION))
@@ -255,7 +298,7 @@ class SaveReminderFragment : BaseFragment() {
      *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
      */
     @TargetApi(29)
-    private fun requestForegroundAndBackgroundLocationPermissions() {
+    fun requestForegroundAndBackgroundLocationPermissions() {
         if (foregroundAndBackgroundLocationPermissionApproved()) {
             return
         }
@@ -269,7 +312,7 @@ class SaveReminderFragment : BaseFragment() {
                 FINE_LOCATION_REQUEST_CODE
             }
         }
-        Log.i(TAG, "Request foreground only location permission")
+        Log.i(TAG, "Request foreground and background only location permission")
         //Request permissions passing in the current activity, the permissions array and the result code.
         requestPermissions(permissionsArray, resultCode)
     }
