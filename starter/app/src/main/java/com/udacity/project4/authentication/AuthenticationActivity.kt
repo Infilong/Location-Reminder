@@ -28,7 +28,6 @@ class AuthenticationActivity : AppCompatActivity() {
     }
 
     private val viewModel by viewModels<LoginViewModel>()
-    private lateinit var navController: NavController
     private lateinit var binding: ActivityAuthenticationBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +37,7 @@ class AuthenticationActivity : AppCompatActivity() {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_authentication)
 
         //If login, keep login state
-        viewModel.authenticationState.observe(this, Observer { authenticationState ->
+        viewModel.authenticationState.observe(this,  { authenticationState ->
             when (authenticationState) {
                 LoginViewModel.AuthenticationState.AUTHENTICATED -> startActivity(Intent(this,
                     RemindersActivity::class.java))
