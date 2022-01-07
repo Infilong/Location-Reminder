@@ -6,10 +6,13 @@ import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.location.Location
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.*
 import android.widget.Toast
@@ -27,6 +30,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.snackbar.Snackbar
+import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
@@ -55,7 +60,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private val defaultLocation = LatLng(100.0, 30.0)
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
     ): View? {
         binding =
             DataBindingUtil.inflate(inflater, R.layout.fragment_select_location, container, false)
@@ -63,8 +68,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         binding.viewModel = _viewModel
         binding.lifecycleOwner = this
 
+        requestForegroundAndBackgroundLocationPermissions()
         //The FusedLocationProviderClient provides several methods to retrieve device location information.
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context!!)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(contxt)
 
         setHasOptionsMenu(true)
 
@@ -77,8 +83,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         binding.selectLocationSaveButton.setOnClickListener {
             onLocationSelected()
         }
-
-        requestForegroundAndBackgroundLocationPermissions()
 
         zoomCurrentLocation()
         return binding.root
@@ -152,7 +156,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private fun isPermissionGranted(): Boolean {
         return ContextCompat.checkSelfPermission(
             contxt,
-            android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
 
     @SuppressLint("MissingPermission")
@@ -161,7 +165,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             map.isMyLocationEnabled = true
         } else {
             ActivityCompat.requestPermissions(contxt as Activity,
-                arrayOf<String>(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
                 REQUEST_LOCATION_PERMISSION)
         }
     }
@@ -214,11 +218,19 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
-        grantResults: IntArray
+        grantResults: IntArray,
     ) {
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
-            if (grantResults.isNotEmpty() && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+            if (foregroundAndBackgroundLocationPermissionApproved()) {
                 enableCurrentLocation()
+            } else {
+                //This app has very little use when permissions are not granted so present a snackbar explaining
+                // that the user needs location permissions in order to play.
+                Snackbar.make(binding.root,
+                    R.string.permission_denied_explanation,
+                    Snackbar.LENGTH_LONG)
+                    .setAction(R.string.settings, View.OnClickListener{requestForegroundAndBackgroundLocationPermissions()})
+                    .show()
             }
         }
     }

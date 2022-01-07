@@ -110,7 +110,6 @@ class SaveReminderFragment : BaseFragment() {
             if (newReminder.latitude != null && newReminder.longitude != null && _viewModel.validateEnteredData(
                     newReminder)
             ) {
-                checkPermissionsAndStartGeofencing()
                 _viewModel.saveReminder(newReminder)
             } else {
                 _viewModel.validateEnteredData(newReminder)
@@ -123,14 +122,6 @@ class SaveReminderFragment : BaseFragment() {
         if (requestCode == TURN_DEVICE_LOCATION_ON_REQUEST_CODE) {
             // We don't rely on the result code, but just check the location setting again
             checkDeviceLocationSettingsAndStartGeofence(false)
-        }
-    }
-
-    private fun checkPermissionsAndStartGeofencing() {
-        if (foregroundAndBackgroundLocationPermissionApproved()) {
-            checkDeviceLocationSettingsAndStartGeofence()
-        } else {
-            requestForegroundAndBackgroundLocationPermissions()
         }
     }
 
@@ -248,74 +239,7 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        Log.d(TAG, "onRequestPermissionResult")
-        if (grantResults.isEmpty() || grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
-            (requestCode == FINE_AND_BACKGROUND_LOCATIONS_REQUEST_CODE &&
-                    grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED)
-        ) {
-            //This app has very little use when permissions are not granted so present a snackbar explaining
-            // that the user needs location permissions in order to play.
-            Snackbar.make(binding.root,
-                R.string.permission_denied_explanation,
-                Snackbar.LENGTH_INDEFINITE)
-                .setAction(R.string.settings) {
-                    startActivity(Intent().apply {
-                        action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                        data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    })
-                }.show()
-        } else {
-            checkDeviceLocationSettingsAndStartGeofence()
-        }
-    }
 
-    /*
-    *  Determines whether the app has the appropriate permissions across Android 10+ and all other
-    *  Android versions.This app need foreground and background location permission to work.
-    */
-    @TargetApi(29)
-    fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
-        val foregroundLocationApproved =
-            (PackageManager.PERMISSION_GRANTED == checkSelfPermission(requireActivity(),
-                Manifest.permission.ACCESS_FINE_LOCATION))
-
-        val backgroundPermissionApproved = if (runningQOrLater) {
-            PackageManager.PERMISSION_GRANTED == checkSelfPermission(requireActivity(),
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        } else {
-            true
-        }
-        return foregroundLocationApproved && backgroundPermissionApproved
-    }
-
-    /*
-     *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
-     */
-    @TargetApi(29)
-    fun requestForegroundAndBackgroundLocationPermissions() {
-        if (foregroundAndBackgroundLocationPermissionApproved()) {
-            return
-        }
-        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-        val resultCode = when {
-            runningQOrLater -> {
-                permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                FINE_AND_BACKGROUND_LOCATIONS_REQUEST_CODE
-            }
-            else -> {
-                FINE_LOCATION_REQUEST_CODE
-            }
-        }
-        Log.i(TAG, "Request foreground and background only location permission")
-        //Request permissions passing in the current activity, the permissions array and the result code.
-        requestPermissions(permissionsArray, resultCode)
-    }
 
     override fun onDestroy() {
         super.onDestroy()
