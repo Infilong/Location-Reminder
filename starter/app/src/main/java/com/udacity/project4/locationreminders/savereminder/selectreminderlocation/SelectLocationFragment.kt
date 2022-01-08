@@ -4,19 +4,14 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 import android.Manifest
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.location.Location
-import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.*
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
@@ -31,7 +26,6 @@ import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.snackbar.Snackbar
-import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
@@ -96,6 +90,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
+        enableCurrentLocation()
         //Show current location blue dot
         if (isPermissionGranted()) {
             map.isMyLocationEnabled = true
@@ -103,7 +98,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         setMapStyle(map)
         setMapLongClick(map)
-        enableCurrentLocation()
         setPoiClick(map)
         Toast.makeText(context, "Please choose a place", Toast.LENGTH_SHORT).show()
     }
@@ -164,7 +158,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if (isPermissionGranted()) {
             map.isMyLocationEnabled = true
         } else {
-            ActivityCompat.requestPermissions(contxt as Activity,
+            requestPermissions(
                 arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
                 REQUEST_LOCATION_PERMISSION)
         }
@@ -227,10 +221,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 //This app has very little use when permissions are not granted so present a snackbar explaining
                 // that the user needs location permissions in order to play.
                 Snackbar.make(binding.root,
-                    R.string.permission_denied_explanation,
-                    Snackbar.LENGTH_LONG)
-                    .setAction(R.string.settings, View.OnClickListener{requestForegroundAndBackgroundLocationPermissions()})
-                    .show()
+                    R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
+                    .setAction(R.string.settings) {
+                        requestForegroundAndBackgroundLocationPermissions()
+                    }.show()
             }
         }
     }
