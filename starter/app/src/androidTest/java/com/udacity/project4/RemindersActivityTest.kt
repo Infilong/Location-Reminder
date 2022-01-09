@@ -247,7 +247,7 @@ fun <T : Activity> ActivityScenario<T>.getToolbarNavigationContentDescription()
     var description = ""
     onActivity {
         description =
-            it.findViewById<Toolbar>(R.id.up).navigationContentDescription as String
+            it.findViewById<Toolbar>(R.id.action_bar).navigationContentDescription as String
     }
     return description
 }
