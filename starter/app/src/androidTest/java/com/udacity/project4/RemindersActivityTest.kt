@@ -2,9 +2,12 @@ package com.udacity.project4
 
 import android.app.Activity
 import android.app.Application
+import androidx.appcompat.widget.Toolbar
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
+import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -19,6 +22,10 @@ import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
 import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
+import com.udacity.project4.util.DataBindingIdlingResource
+import com.udacity.project4.util.monitorActivity
+import com.udacity.project4.utils.EspressoIdlingResource
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.not
@@ -40,6 +47,9 @@ class RemindersActivityTest :
 
     private lateinit var repository: ReminderDataSource
     private lateinit var appContext: Application
+
+    // An Idling Resource that waits for Data Binding to have no pending bindings
+    private val dataBindingIdlingResource = DataBindingIdlingResource()
 
     /**
      * As we use Koin as a Service Locator Library to develop our code, we'll also use Koin to test our code.
@@ -76,6 +86,23 @@ class RemindersActivityTest :
         runBlocking {
             repository.deleteAllReminders()
         }
+    }
+
+    /**
+     * Idling resources tell Espresso that the app is idle or busy. This is needed when operations
+     * are not scheduled in the main Looper (for example when executed on a different thread).
+     */
+    @Before
+    fun registerIdlingResource() {
+        IdlingRegistry.getInstance().register(EspressoIdlingResource.countingIdlingResource)
+    }
+
+    /**
+     * Unregister your Idling Resource so it can be garbage collected and does not leak any memory.
+     */
+    @After
+    fun unregisterIdlingResource() {
+        IdlingRegistry.getInstance().unregister(EspressoIdlingResource.countingIdlingResource)
     }
 
     @After
@@ -148,18 +175,27 @@ class RemindersActivityTest :
     }
 
     @Test
-    fun toast_verifyToast() = runBlocking {
+    fun toast_verifyTwoToasts() = runBlocking {
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
 
         onView(withId(R.id.addReminderFAB)).perform(click())
         onView(withId(R.id.reminderTitle)).perform(replaceText("title"))
         onView(withId(R.id.reminderDescription)).perform(replaceText("des"))
         onView(withId(R.id.selectLocation)).perform(click())
-        onView(withId(R.id.map)).perform(longClick())
+        onView(withText(R.string.choose_a_place)).inRoot(withDecorView(not(`is`(getActivity(
+            activityScenario)?.window?.decorView))))
+            .check(matches(isDisplayed()))
 
+        // Delay
+        runBlocking {
+            delay(2000)
+        }
+
+        onView(withId(R.id.map)).perform(longClick())
         onView(withId(R.id.select_location_save_button)).perform(click())
         onView(withId(R.id.saveReminder)).perform(click())
-        onView(withText(R.string.reminder_saved)).inRoot(withDecorView(not(`is`(getActivity(activityScenario)?.window?.decorView))))
+        onView(withText(R.string.reminder_saved)).inRoot(withDecorView(not(`is`(getActivity(
+            activityScenario)?.window?.decorView))))
             .check(matches(isDisplayed()))
 
         activityScenario.close()
@@ -173,4 +209,45 @@ class RemindersActivityTest :
         }
         return activity
     }
+
+
+    @Test
+    fun selectLocationScreen_clickBackButton_backToAddReminderScreen() {
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.selectLocation)).perform(click())
+        // Confirm that if we click back once, we end up back at the save reminder page
+        Espresso.pressBack()
+        onView(withId(R.id.fragment_save_reminder)).check(matches(isDisplayed()))
+
+        activityScenario.close()
+    }
+
+    @Test
+    fun selectLocationScreen_clickUpButton_backToAddReminderScreen() {
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.selectLocation)).perform(click())
+        // Confirm that if we click up once, we end up back at the save reminder page
+        onView(withContentDescription(activityScenario.getToolbarNavigationContentDescription())
+        ).perform(click())
+        onView(withId(R.id.fragment_save_reminder)).check(matches(isDisplayed()))
+
+        activityScenario.close()
+    }
+
+}
+
+fun <T : Activity> ActivityScenario<T>.getToolbarNavigationContentDescription()
+        : String {
+    var description = ""
+    onActivity {
+        description =
+            it.findViewById<Toolbar>(R.id.up).navigationContentDescription as String
+    }
+    return description
 }

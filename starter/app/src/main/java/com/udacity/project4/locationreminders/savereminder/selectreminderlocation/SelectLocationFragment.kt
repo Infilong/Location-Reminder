@@ -30,6 +30,7 @@ import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
+import com.udacity.project4.utils.wrapEspressoIdlingResource
 import org.koin.android.ext.android.inject
 import java.util.*
 
@@ -76,6 +77,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 //       call this function after the user confirms on the selected location
         binding.selectLocationSaveButton.setOnClickListener {
             onLocationSelected()
+            Toast.makeText(context, getString(R.string.reminder_saved), Toast.LENGTH_SHORT).show()
         }
 
         zoomCurrentLocation()
@@ -99,7 +101,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         setMapStyle(map)
         setMapLongClick(map)
         setPoiClick(map)
-        Toast.makeText(context, "Please choose a place", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, R.string.choose_a_place, Toast.LENGTH_SHORT).show()
     }
 
     //        add style to the map
