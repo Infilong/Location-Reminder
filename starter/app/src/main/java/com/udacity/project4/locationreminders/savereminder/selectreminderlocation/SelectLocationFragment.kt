@@ -30,7 +30,6 @@ import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
-import com.udacity.project4.utils.wrapEspressoIdlingResource
 import org.koin.android.ext.android.inject
 import java.util.*
 
@@ -63,7 +62,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         binding.viewModel = _viewModel
         binding.lifecycleOwner = this
 
-        requestForegroundAndBackgroundLocationPermissions()
+        requestForegroundLocationPermissions()
         //The FusedLocationProviderClient provides several methods to retrieve device location information.
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(contxt)
 
@@ -217,7 +216,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         grantResults: IntArray,
     ) {
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
-            if (foregroundAndBackgroundLocationPermissionApproved()) {
+            if (foregroundLocationPermissionApproved()) {
                 enableCurrentLocation()
             } else {
                 //This app has very little use when permissions are not granted so present a snackbar explaining
@@ -225,7 +224,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 Snackbar.make(binding.root,
                     R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
                     .setAction(R.string.settings) {
-                        requestForegroundAndBackgroundLocationPermissions()
+                        requestForegroundLocationPermissions()
                     }.show()
             }
         }
@@ -257,40 +256,24 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     *  Android versions.This app need foreground and background location permission to work.
     */
     @TargetApi(29)
-    fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
-        val foregroundLocationApproved =
-            (PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(requireActivity(),
-                Manifest.permission.ACCESS_FINE_LOCATION))
-
-        val backgroundPermissionApproved = if (runningQOrLater) {
-            PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(requireActivity(),
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        } else {
-            true
-        }
-        return foregroundLocationApproved && backgroundPermissionApproved
+    fun foregroundLocationPermissionApproved(): Boolean {
+        return (PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(
+            requireActivity(),
+            Manifest.permission.ACCESS_FINE_LOCATION))
     }
 
     /*
-     *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
+     *  Requests ACCESS_FINE_LOCATION.
      */
     @TargetApi(29)
-    fun requestForegroundAndBackgroundLocationPermissions() {
-        if (foregroundAndBackgroundLocationPermissionApproved()) {
+    fun requestForegroundLocationPermissions() {
+        if (foregroundLocationPermissionApproved()) {
             return
         }
-        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-        val resultCode = when {
-            runningQOrLater -> {
-                permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                33
-            }
-            else -> {
-                34
-            }
-        }
+        val permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        val resultCode = 33
         Log.i(com.udacity.project4.locationreminders.savereminder.TAG,
-            "Request foreground and background location permission")
+            "Request foreground location permission")
         //Request permissions passing in the current activity, the permissions array and the result code.
         requestPermissions(permissionsArray, resultCode)
     }
