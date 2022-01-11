@@ -1,29 +1,21 @@
 package com.udacity.project4.locationreminders.savereminder
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.annotation.TargetApi
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
-import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.material.snackbar.Snackbar
-import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
@@ -56,17 +48,9 @@ class SaveReminderFragment : BaseFragment() {
 
     private lateinit var contxt: Context
 
-    private val resultLauncher = registerForActivityResult(
-        ActivityResultContracts.StartIntentSenderForResult()
-    ) { result ->
-        if (result.resultCode == TURN_DEVICE_LOCATION_ON_REQUEST_CODE) {
-            checkDeviceLocationSettingsAndStartGeofence(resolve = true)
-        }
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View? {
         binding =
             DataBindingUtil.inflate(inflater, R.layout.fragment_save_reminder, container, false)
@@ -178,9 +162,8 @@ class SaveReminderFragment : BaseFragment() {
             // In fragments, we should instead call the fragment equivalent
             if (exception is ResolvableApiException && resolve) {
                 try {
-                    val intentSenderRequest =
-                        IntentSenderRequest.Builder(exception.resolution).build()
-                    resultLauncher.launch(intentSenderRequest)
+                    startIntentSenderForResult(exception.resolution.intentSender,
+                        TURN_DEVICE_LOCATION_ON_REQUEST_CODE,null,0,0,0,null)
                 } catch (sendEx: IntentSender.SendIntentException) {
                     Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
                 }
@@ -222,7 +205,7 @@ class SaveReminderFragment : BaseFragment() {
 
             geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
                 addOnSuccessListener {
-                    Toast.makeText(contxt, R.string.geofence_added, Toast.LENGTH_SHORT)
+                    Toast.makeText(contxt, R.string.geofence_added, Toast.LENGTH_LONG)
                         .show()
                     Log.e("Add Geofence", geofence.requestId)
                 }
@@ -238,7 +221,6 @@ class SaveReminderFragment : BaseFragment() {
             }
         }
     }
-
 
 
     override fun onDestroy() {
