@@ -5,6 +5,8 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.content.Context
+import android.content.Intent
+import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.location.Location
@@ -15,8 +17,11 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
+import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -78,7 +83,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             onLocationSelected()
             Toast.makeText(context, getString(R.string.reminder_saved), Toast.LENGTH_SHORT).show()
         }
-
+        checkDeviceLocationSettingsAndStartGeofence()
         zoomCurrentLocation()
         return binding.root
     }
@@ -277,4 +282,48 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         //Request permissions passing in the current activity, the permissions array and the result code.
         requestPermissions(permissionsArray, resultCode)
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == TURN_DEVICE_LOCATION_ON_REQUEST_CODE) {
+            // We don't rely on the result code, but just check the location setting again
+            checkDeviceLocationSettingsAndStartGeofence(false)
+        }
+    }
+
+    /*
+    *  Uses the Location Client to check the current state of location settings, and gives the user
+    *  the opportunity to turn on location services within our app.
+    */
+    private fun checkDeviceLocationSettingsAndStartGeofence(resolve: Boolean = true) {
+        val locationRequest = LocationRequest.create().apply {
+            priority = LocationRequest.PRIORITY_LOW_POWER
+        }
+        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+
+        val settingsClient = LocationServices.getSettingsClient(contxt)
+        val locationSettingsResponseTask =
+            settingsClient.checkLocationSettings(builder.build())
+
+        locationSettingsResponseTask.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException && resolve) {
+                try {
+                    startIntentSenderForResult(exception.resolution.intentSender,
+                        TURN_DEVICE_LOCATION_ON_REQUEST_CODE, null, 0, 0, 0, null)
+                } catch (sendEx: IntentSender.SendIntentException) {
+                    Log.d(com.udacity.project4.locationreminders.savereminder.TAG,
+                        "Error getting location settings resolution: " + sendEx.message)
+                }
+            } else {
+                Snackbar.make(
+                    binding.root,
+                    R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+                ).setAction(android.R.string.ok) {
+                    checkDeviceLocationSettingsAndStartGeofence()
+                }.show()
+            }
+        }
+    }
 }
+
+private const val TURN_DEVICE_LOCATION_ON_REQUEST_CODE = 35
