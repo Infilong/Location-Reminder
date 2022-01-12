@@ -1,10 +1,13 @@
 package com.udacity.project4.locationreminders.savereminder
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.annotation.TargetApi
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -12,6 +15,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -30,7 +35,6 @@ class SaveReminderFragment : BaseFragment() {
     //data held by SaveReminderViewModel is synced across SaveReminderFragment and SelectLocationFragment
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSaveReminderBinding
-
     private val runningQOrLater =
         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
 
@@ -98,6 +102,12 @@ class SaveReminderFragment : BaseFragment() {
             } else {
                 _viewModel.validateEnteredData(newReminder)
             }
+
+            if (!foregroundAndBackgroundLocationPermissionApproved()) {
+                requestForegroundAndBackgroundLocationPermissions()
+            } else {
+                checkDeviceLocationSettingsAndStartGeofence()
+            }
         }
     }
 
@@ -106,6 +116,27 @@ class SaveReminderFragment : BaseFragment() {
         if (requestCode == TURN_DEVICE_LOCATION_ON_REQUEST_CODE) {
             // We don't rely on the result code, but just check the location setting again
             checkDeviceLocationSettingsAndStartGeofence(false)
+        }
+    }
+
+    // Check if location permissions are granted and if so enable the
+    // location data layer.
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        if (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE) {
+            if (foregroundAndBackgroundLocationPermissionApproved()) {
+
+            }
+                //This app has very little use when permissions are not granted so present a snackbar explaining
+                // that the user needs location permissions in order to play.
+                Snackbar.make(binding.root,
+                    R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
+                    .setAction(R.string.settings) {
+                        requestForegroundAndBackgroundLocationPermissions()
+                    }.show()
         }
     }
 
@@ -207,7 +238,7 @@ class SaveReminderFragment : BaseFragment() {
                 addOnSuccessListener {
                     Toast.makeText(contxt, R.string.geofence_added, Toast.LENGTH_LONG)
                         .show()
-                    Log.e("Add Geofence", geofence.requestId)
+                    Log.e("Added Geofence", geofence.requestId)
                 }
                 addOnFailureListener {
                     Toast.makeText(contxt,
@@ -220,6 +251,58 @@ class SaveReminderFragment : BaseFragment() {
                 }
             }
         }
+    }
+
+    /*
+     *  Determines whether the app has the appropriate permissions across Android 10+ and all other
+     *  Android versions.
+     */
+    @TargetApi(29)
+    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
+        val foregroundLocationApproved = (
+                PackageManager.PERMISSION_GRANTED ==
+                        checkSelfPermission(contxt,
+                            Manifest.permission.ACCESS_FINE_LOCATION))
+        val backgroundPermissionApproved =
+            if (runningQOrLater) {
+                PackageManager.PERMISSION_GRANTED ==
+                        checkSelfPermission(
+                            contxt, Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        )
+            } else {
+                true
+            }
+        return foregroundLocationApproved && backgroundPermissionApproved
+    }
+
+    /*
+     *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
+     */
+    @TargetApi(29 )
+    private fun requestForegroundAndBackgroundLocationPermissions() {
+        if (foregroundAndBackgroundLocationPermissionApproved())
+            return
+
+        // Else request the permission
+        // this provides the result[LOCATION_PERMISSION_INDEX]
+        //The permissionsArray contains the permissions that are going to be requested.
+        // Initially, add ACCESS_FINE_LOCATION since that will be needed on all API levels.
+        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+
+        val resultCode = when {
+            runningQOrLater -> {
+                // this provides the result[BACKGROUND_LOCATION_PERMISSION_INDEX]
+                permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
+            }
+            else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
+        }
+
+        Log.d(TAG, "Request foreground only location permission")
+        requestPermissions(
+            permissionsArray,
+            resultCode
+        )
     }
 
 
@@ -237,8 +320,8 @@ class SaveReminderFragment : BaseFragment() {
 }
 
 private const val TURN_DEVICE_LOCATION_ON_REQUEST_CODE = 35
-private const val FINE_LOCATION_REQUEST_CODE = 33
-private const val FINE_AND_BACKGROUND_LOCATIONS_REQUEST_CODE = 34
+private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 33
+private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 34
 const val TAG = "RemindersActivity"
 private const val LOCATION_PERMISSION_INDEX = 0
 private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
