@@ -67,8 +67,8 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
                 )
             )
             showLoading.value = false
-            navigationCommand.value = NavigationCommand.Back
         }
+        navigationCommand.value = NavigationCommand.Back
     }
 
     /**

@@ -142,7 +142,7 @@ class SaveReminderViewModelTest {
 
         assertThat(saveReminderViewModel.showLoading.getOrAwaitValue(), `is`(false))
         assertThat(saveReminderViewModel.showToast.getOrAwaitValue(),
-            `is`(saveReminderViewModel.app.getString(R.string.reminder_saved)))
+            `is`(saveReminderViewModel.app.getString(R.string.reminder_location_selected)))
     }
 }
 

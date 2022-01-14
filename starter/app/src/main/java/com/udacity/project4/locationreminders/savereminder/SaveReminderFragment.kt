@@ -14,8 +14,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.databinding.DataBindingUtil
 import com.google.android.gms.common.api.ResolvableApiException
@@ -84,6 +82,10 @@ class SaveReminderFragment : BaseFragment() {
         }
 
         binding.saveReminder.setOnClickListener {
+            if (!foregroundAndBackgroundLocationPermissionApproved()) {
+                requestForegroundAndBackgroundLocationPermissions()
+            }
+
             val title = _viewModel.reminderTitle.value
             val description = _viewModel.reminderDescription.value
             val location = _viewModel.reminderSelectedLocationStr.value
@@ -94,20 +96,7 @@ class SaveReminderFragment : BaseFragment() {
 //             1) add a geofencing request
 //             2) save the reminder to the local db
             newReminder = ReminderDataItem(title, description, location, latitude, longitude)
-
-            if (newReminder.latitude != null && newReminder.longitude != null && _viewModel.validateEnteredData(
-                    newReminder)
-            ) {
-                _viewModel.saveReminder(newReminder)
-            } else {
-                _viewModel.validateEnteredData(newReminder)
-            }
-
-            if (!foregroundAndBackgroundLocationPermissionApproved()) {
-                requestForegroundAndBackgroundLocationPermissions()
-            } else {
-                checkDeviceLocationSettingsAndStartGeofence()
-            }
+            checkDeviceLocationSettingsAndStartGeofence()
         }
     }
 
@@ -130,13 +119,13 @@ class SaveReminderFragment : BaseFragment() {
             if (foregroundAndBackgroundLocationPermissionApproved()) {
 
             }
-                //This app has very little use when permissions are not granted so present a snackbar explaining
-                // that the user needs location permissions in order to play.
-                Snackbar.make(binding.root,
-                    R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
-                    .setAction(R.string.settings) {
-                        requestForegroundAndBackgroundLocationPermissions()
-                    }.show()
+            //This app has very little use when permissions are not granted so present a snackbar explaining
+            // that the user needs location permissions in order to play.
+            Snackbar.make(binding.root,
+                R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
+                .setAction(R.string.settings) {
+                    requestForegroundAndBackgroundLocationPermissions()
+                }.show()
         }
     }
 
@@ -194,7 +183,7 @@ class SaveReminderFragment : BaseFragment() {
             if (exception is ResolvableApiException && resolve) {
                 try {
                     startIntentSenderForResult(exception.resolution.intentSender,
-                        TURN_DEVICE_LOCATION_ON_REQUEST_CODE,null,0,0,0,null)
+                        TURN_DEVICE_LOCATION_ON_REQUEST_CODE, null, 0, 0, 0, null)
                 } catch (sendEx: IntentSender.SendIntentException) {
                     Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
                 }
@@ -209,7 +198,15 @@ class SaveReminderFragment : BaseFragment() {
         }
         locationSettingsResponseTask.addOnCompleteListener {
             if (it.isSuccessful) {
-                addGeofenceForReminder()
+                if (newReminder.latitude != null && newReminder.longitude != null && _viewModel.validateEnteredData(
+                        newReminder)
+                ) {
+                    addGeofenceForReminder()
+                    _viewModel.saveReminder(newReminder)
+                } else {
+                    _viewModel.validateEnteredData(newReminder)
+                }
+
             }
         }
     }
@@ -222,7 +219,7 @@ class SaveReminderFragment : BaseFragment() {
                 .setCircularRegion(newReminder.latitude!!,
                     newReminder.longitude!!,
                     GEOFENCE_RADIUS_IN_METERS)
-                .setExpirationDuration(GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+                .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
                 .build()
 
@@ -278,7 +275,7 @@ class SaveReminderFragment : BaseFragment() {
     /*
      *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
      */
-    @TargetApi(29 )
+    @TargetApi(29)
     private fun requestForegroundAndBackgroundLocationPermissions() {
         if (foregroundAndBackgroundLocationPermissionApproved())
             return

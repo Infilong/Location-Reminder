@@ -81,7 +81,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 //       call this function after the user confirms on the selected location
         binding.selectLocationSaveButton.setOnClickListener {
             onLocationSelected()
-            Toast.makeText(context, getString(R.string.reminder_saved), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.reminder_location_selected), Toast.LENGTH_SHORT).show()
         }
         checkDeviceLocationSettingsAndStartGeofence()
         zoomCurrentLocation()
