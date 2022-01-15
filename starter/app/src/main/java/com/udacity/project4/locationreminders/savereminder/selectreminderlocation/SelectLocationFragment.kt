@@ -160,12 +160,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if (isPermissionGranted()) {
             map.isMyLocationEnabled = true
             zoomCurrentLocation()
-        } else {
-            Snackbar.make(binding.root,
-                R.string.permission_denied_explanation, Snackbar.LENGTH_INDEFINITE)
-                .setAction(R.string.settings) {
-                    requestForegroundLocationPermissions()
-                }.show()
         }
     }
 
@@ -220,7 +214,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     ) {
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
             if (foregroundLocationPermissionApproved()) {
-                enableCurrentLocation()
+
             } else {
                 // This app has very little use when permissions are not granted so present a snackbar explaining
                 // that the user needs location permissions in order to play.
