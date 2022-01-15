@@ -67,7 +67,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         binding.viewModel = _viewModel
         binding.lifecycleOwner = this
 
-        requestForegroundLocationPermissions()
         //The FusedLocationProviderClient provides several methods to retrieve device location information.
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(contxt)
 
@@ -78,12 +77,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
+        checkDeviceLocationSettings()
 //       call this function after the user confirms on the selected location
         binding.selectLocationSaveButton.setOnClickListener {
             onLocationSelected()
-            Toast.makeText(context, getString(R.string.reminder_location_selected), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context,
+                getString(R.string.reminder_location_selected),
+                Toast.LENGTH_SHORT).show()
         }
-        checkDeviceLocationSettingsAndStartGeofence()
+
         zoomCurrentLocation()
         return binding.root
     }
@@ -97,11 +99,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         enableCurrentLocation()
-        //Show current location blue dot
-        if (isPermissionGranted()) {
-            map.isMyLocationEnabled = true
-        }
-
         setMapStyle(map)
         setMapLongClick(map)
         setPoiClick(map)
@@ -164,9 +161,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if (isPermissionGranted()) {
             map.isMyLocationEnabled = true
         } else {
-            requestPermissions(
-                arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
-                REQUEST_LOCATION_PERMISSION)
+            requestForegroundLocationPermissions()
         }
     }
 
@@ -213,8 +208,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         inflater.inflate(R.menu.map_options, menu)
     }
 
-    // Check if location permissions are granted and if so enable the
-    // location data layer.
+    // Check if location permissions are granted and if so enable the current location
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -224,7 +218,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             if (foregroundLocationPermissionApproved()) {
                 enableCurrentLocation()
             } else {
-                //This app has very little use when permissions are not granted so present a snackbar explaining
+                // This app has very little use when permissions are not granted so present a snackbar explaining
                 // that the user needs location permissions in order to play.
                 Snackbar.make(binding.root,
                     R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
@@ -287,7 +281,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == TURN_DEVICE_LOCATION_ON_REQUEST_CODE) {
             // We don't rely on the result code, but just check the location setting again
-            checkDeviceLocationSettingsAndStartGeofence(false)
+            checkDeviceLocationSettings(false)
         }
     }
 
@@ -295,7 +289,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     *  Uses the Location Client to check the current state of location settings, and gives the user
     *  the opportunity to turn on location services within our app.
     */
-    private fun checkDeviceLocationSettingsAndStartGeofence(resolve: Boolean = true) {
+    private fun checkDeviceLocationSettings(resolve: Boolean = true) {
         val locationRequest = LocationRequest.create().apply {
             priority = LocationRequest.PRIORITY_LOW_POWER
         }
@@ -317,9 +311,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             } else {
                 Snackbar.make(
                     binding.root,
-                    R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+                    R.string.location_required_error, Snackbar.LENGTH_LONG
                 ).setAction(android.R.string.ok) {
-                    checkDeviceLocationSettingsAndStartGeofence()
+                    checkDeviceLocationSettings()
                 }.show()
             }
         }
