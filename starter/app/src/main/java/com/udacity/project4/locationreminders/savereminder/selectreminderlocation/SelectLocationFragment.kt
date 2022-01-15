@@ -57,6 +57,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private var lastKnownLocation: Location? = null
     private val defaultLocation = LatLng(100.0, 30.0)
 
+    @SuppressLint("MissingPermission")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
     ): View? {
@@ -76,10 +77,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        if (!foregroundLocationPermissionApproved()) {
-            requestForegroundLocationPermissions()
-        }
-
 //       call this function after the user confirms on the selected location
         binding.selectLocationSaveButton.setOnClickListener {
             onLocationSelected()
@@ -98,7 +95,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
+        requestForegroundLocationPermissions()
         enableCurrentLocation()
+
         setMapStyle(map)
         setMapLongClick(map)
         setPoiClick(map)
@@ -153,9 +152,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     @SuppressLint("MissingPermission")
     private fun enableCurrentLocation() {
-        checkDeviceLocationSettings()
         if (foregroundLocationPermissionApproved()) {
             map.isMyLocationEnabled = true
+            //map.setOnMyLocationButtonClickListener{checkDeviceLocationSettings()}
+            checkDeviceLocationSettings()
             zoomCurrentLocation()
         }
     }
