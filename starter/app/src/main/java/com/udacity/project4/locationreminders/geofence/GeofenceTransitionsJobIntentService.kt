@@ -54,8 +54,8 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
     private fun sendNotification(triggeringGeofences: List<Geofence>) {
 //        Since the user might want to add multiple reminders at the same location,
 //        using a for loop to loop through all triggering Geofences
-        for (i in 1..triggeringGeofences.size) {
-            val requestId = triggeringGeofences[i].requestId
+        for (element in triggeringGeofences) {
+            val requestId = element.requestId
 
             //Get the local repository instance
             //koin inject from Myapp.kt single { RemindersLocalRepository(get()) as ReminderDataSource }
