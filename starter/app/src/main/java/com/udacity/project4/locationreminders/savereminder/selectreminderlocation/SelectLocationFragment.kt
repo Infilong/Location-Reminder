@@ -77,7 +77,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        checkDeviceLocationSettings()
+        requestForegroundLocationPermissions()
 //       call this function after the user confirms on the selected location
         binding.selectLocationSaveButton.setOnClickListener {
             onLocationSelected()
@@ -85,8 +85,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 getString(R.string.reminder_location_selected),
                 Toast.LENGTH_SHORT).show()
         }
-
-        zoomCurrentLocation()
         return binding.root
     }
 
@@ -158,10 +156,16 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     @SuppressLint("MissingPermission")
     private fun enableCurrentLocation() {
+        checkDeviceLocationSettings()
         if (isPermissionGranted()) {
             map.isMyLocationEnabled = true
+            zoomCurrentLocation()
         } else {
-            requestForegroundLocationPermissions()
+            Snackbar.make(binding.root,
+                R.string.permission_denied_explanation, Snackbar.LENGTH_INDEFINITE)
+                .setAction(R.string.settings) {
+                    requestForegroundLocationPermissions()
+                }.show()
         }
     }
 
