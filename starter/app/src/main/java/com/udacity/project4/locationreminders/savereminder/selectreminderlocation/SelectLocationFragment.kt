@@ -76,7 +76,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        requestForegroundLocationPermissions()
+        if (!foregroundLocationPermissionApproved()) {
+            requestForegroundLocationPermissions()
+        }
+
 //       call this function after the user confirms on the selected location
         binding.selectLocationSaveButton.setOnClickListener {
             onLocationSelected()
