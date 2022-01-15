@@ -52,7 +52,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private lateinit var map: GoogleMap
     private val TAG = SelectLocationFragment::class.java.simpleName
     private var marker: Marker? = null
-    private val REQUEST_LOCATION_PERMISSION = 1
     private val zoomLevel = 15f
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var lastKnownLocation: Location? = null
@@ -148,16 +147,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
-    private fun isPermissionGranted(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            contxt,
-            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-    }
 
     @SuppressLint("MissingPermission")
     private fun enableCurrentLocation() {
         checkDeviceLocationSettings()
-        if (isPermissionGranted()) {
+        if (foregroundLocationPermissionApproved()) {
             map.isMyLocationEnabled = true
             zoomCurrentLocation()
         }
@@ -167,7 +161,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     //        zoom to the user location after taking his permission
     @SuppressLint("MissingPermission")
     private fun zoomCurrentLocation() {
-        if (isPermissionGranted()) {
+        if (foregroundLocationPermissionApproved()) {
             val locationResult = fusedLocationClient.lastLocation
             locationResult.addOnCompleteListener(requireActivity()) { task ->
                 if (task.isSuccessful) {
@@ -212,18 +206,17 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         permissions: Array<out String>,
         grantResults: IntArray,
     ) {
-        if (requestCode == REQUEST_LOCATION_PERMISSION) {
+        if (requestCode == REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE) {
             if (foregroundLocationPermissionApproved()) {
-
-            } else {
-                // This app has very little use when permissions are not granted so present a snackbar explaining
-                // that the user needs location permissions in order to play.
-                Snackbar.make(binding.root,
-                    R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
-                    .setAction(R.string.settings) {
-                        requestForegroundLocationPermissions()
-                    }.show()
+                return
             }
+            // This app has very little use when permissions are not granted so present a snackbar explaining
+            // that the user needs location permissions in order to play.
+            Snackbar.make(binding.root,
+                R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
+                .setAction(R.string.settings) {
+                    requestForegroundLocationPermissions()
+                }.show()
         }
     }
 
@@ -318,4 +311,5 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 }
 
+private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 33
 private const val TURN_DEVICE_LOCATION_ON_REQUEST_CODE = 35

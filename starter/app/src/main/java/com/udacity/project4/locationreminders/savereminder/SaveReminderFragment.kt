@@ -100,6 +100,7 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
+    //Result of checking location setting on or off
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == TURN_DEVICE_LOCATION_ON_REQUEST_CODE) {
@@ -117,15 +118,15 @@ class SaveReminderFragment : BaseFragment() {
     ) {
         if (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE) {
             if (foregroundAndBackgroundLocationPermissionApproved()) {
-
-            }
-            //This app has very little use when permissions are not granted so present a snackbar explaining
+                return
+            } //This app has very little use when permissions are not granted so present a snackbar explaining
             // that the user needs location permissions in order to play.
             Snackbar.make(binding.root,
                 R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
                 .setAction(R.string.settings) {
                     requestForegroundAndBackgroundLocationPermissions()
                 }.show()
+
         }
     }
 
