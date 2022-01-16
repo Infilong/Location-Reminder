@@ -8,7 +8,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -26,7 +28,6 @@ import com.udacity.project4.databinding.FragmentSaveReminderBinding
 import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import org.koin.android.ext.android.inject
-import java.util.concurrent.TimeUnit
 
 class SaveReminderFragment : BaseFragment() {
     //Get the view model this time as a single to be shared with the another fragment
@@ -80,12 +81,7 @@ class SaveReminderFragment : BaseFragment() {
             _viewModel.navigationCommand.value =
                 NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
         }
-
         binding.saveReminder.setOnClickListener {
-            if (!foregroundAndBackgroundLocationPermissionApproved()) {
-                requestForegroundAndBackgroundLocationPermissions()
-            }
-
             val title = _viewModel.reminderTitle.value
             val description = _viewModel.reminderDescription.value
             val location = _viewModel.reminderSelectedLocationStr.value
@@ -100,12 +96,82 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
-    //Result of checking location setting on or off
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == TURN_DEVICE_LOCATION_ON_REQUEST_CODE) {
-            // We don't rely on the result code, but just check the location setting again
-            checkDeviceLocationSettingsAndStartGeofence(false)
+    // Interface function for selectLocation button listener
+    private fun checkPermissionsAndStartGeofencing() {
+        if (foregroundAndBackgroundLocationPermissionApproved()) {
+            checkDeviceLocationSettingsAndStartGeofence()
+        } else {
+            requestForegroundAndBackgroundLocationPermissions()
+        }
+    }
+
+    /*
+     *  Determines whether the app has the appropriate permissions across Android 10+ and all other
+     *  Android versions.
+     */
+    @TargetApi(29)
+    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
+        val foregroundLocationApproved = (
+                PackageManager.PERMISSION_GRANTED ==
+                        checkSelfPermission(contxt,
+                            Manifest.permission.ACCESS_FINE_LOCATION))
+        val backgroundPermissionApproved =
+            if (runningQOrLater) {
+                PackageManager.PERMISSION_GRANTED ==
+                        checkSelfPermission(
+                            contxt, Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        )
+            } else {
+                true
+            }
+        return foregroundLocationApproved && backgroundPermissionApproved
+    }
+
+    /*
+     *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
+     */
+    @TargetApi(29)
+    private fun requestForegroundAndBackgroundLocationPermissions() {
+        if (foregroundAndBackgroundLocationPermissionApproved()) {
+            return
+        }
+        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        val resultCode = when {
+            runningQOrLater -> {
+                // this provides the result[BACKGROUND_LOCATION_PERMISSION_INDEX]
+                permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
+            }
+            else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
+        }
+
+        Log.d(TAG, "Request foreground only location permission")
+        requestPermissions(
+            permissionsArray,
+            resultCode
+        )
+    }
+
+    // Check if location permissions are granted and if so check device location settings
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        if (
+            grantResults.isEmpty() ||
+            grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
+            (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE &&
+                    grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] ==
+                    PackageManager.PERMISSION_DENIED))
+        {
+            Snackbar.make(binding.root,
+                R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
+                .setAction(R.string.settings) {
+                    requestForegroundAndBackgroundLocationPermissions()
+                }.show()
+        } else {
+            checkDeviceLocationSettingsAndStartGeofence()
         }
     }
 
@@ -176,23 +242,24 @@ class SaveReminderFragment : BaseFragment() {
         }
         locationSettingsResponseTask.addOnSuccessListener {
             if (newReminder.latitude != null && newReminder.longitude != null && _viewModel.validateEnteredData(
-                    newReminder) && foregroundAndBackgroundLocationPermissionApproved()
+                    newReminder)
             ) {
                 addGeofenceForReminder()
                 _viewModel.saveReminder(newReminder)
-            } else {
-                if (!foregroundAndBackgroundLocationPermissionApproved()) {
-                    Snackbar.make(binding.root,
-                        R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
-                        .setAction(R.string.settings) {
-                            requestForegroundAndBackgroundLocationPermissions()
-                        }.show()
-                }
-                _viewModel.validateEnteredData(newReminder)
             }
         }
     }
 
+    //Result of checking location setting on or off
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == TURN_DEVICE_LOCATION_ON_REQUEST_CODE) {
+            // We don't rely on the result code, but just check the location setting again
+            checkDeviceLocationSettingsAndStartGeofence(false)
+        }
+    }
+
+    //Add geofence of the reminder
     @SuppressLint("MissingPermission")
     private fun addGeofenceForReminder() {
         if (_viewModel.validateEnteredData(newReminder)) {
@@ -232,86 +299,6 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
-    private fun checkPermissionsAndStartGeofencing() {
-        if (foregroundAndBackgroundLocationPermissionApproved()) {
-            checkDeviceLocationSettingsAndStartGeofence()
-        } else {
-            requestForegroundAndBackgroundLocationPermissions()
-        }
-    }
-    /*
-     *  Determines whether the app has the appropriate permissions across Android 10+ and all other
-     *  Android versions.
-     */
-    @TargetApi(29)
-    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
-        val foregroundLocationApproved = (
-                PackageManager.PERMISSION_GRANTED ==
-                        checkSelfPermission(contxt,
-                            Manifest.permission.ACCESS_FINE_LOCATION))
-        val backgroundPermissionApproved =
-            if (runningQOrLater) {
-                PackageManager.PERMISSION_GRANTED ==
-                        checkSelfPermission(
-                            contxt, Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                        )
-            } else {
-                true
-            }
-        return foregroundLocationApproved && backgroundPermissionApproved
-    }
-
-    /*
-     *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
-     */
-    @TargetApi(29)
-    private fun requestForegroundAndBackgroundLocationPermissions() {
-        if (foregroundAndBackgroundLocationPermissionApproved())
-            return
-
-        // Else request the permission
-        // this provides the result[LOCATION_PERMISSION_INDEX]
-        //The permissionsArray contains the permissions that are going to be requested.
-        // Initially, add ACCESS_FINE_LOCATION since that will be needed on all API levels.
-        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-
-        val resultCode = when {
-            runningQOrLater -> {
-                // this provides the result[BACKGROUND_LOCATION_PERMISSION_INDEX]
-                permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
-            }
-            else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
-        }
-
-        Log.d(TAG, "Request foreground only location permission")
-        requestPermissions(
-            permissionsArray,
-            resultCode
-        )
-    }
-
-    // Check if location permissions are granted and if so enable the
-    // location data layer.
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray,
-    ) {
-        if (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE) {
-            if (foregroundAndBackgroundLocationPermissionApproved()) {
-                return
-            } else {//This app has very little use when permissions are not granted so present a snackbar explaining
-                // that the user needs location permissions in order to play.
-                Snackbar.make(binding.root,
-                    R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
-                    .setAction(R.string.settings) {
-                        requestForegroundAndBackgroundLocationPermissions()
-                    }.show()
-            }
-        }
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         //make sure to clear the view model after destroy, as it's a single view model.
@@ -326,10 +313,9 @@ class SaveReminderFragment : BaseFragment() {
 }
 
 private const val TURN_DEVICE_LOCATION_ON_REQUEST_CODE = 35
-private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 33
-private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 34
-const val TAG = "RemindersActivity"
+private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 36
+private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
+private const val TAG = "SaveLocationFragment"
 private const val LOCATION_PERMISSION_INDEX = 0
 private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
-private val GEOFENCE_EXPIRATION_IN_MILLISECONDS: Long = TimeUnit.HOURS.toMillis(1)
 private const val GEOFENCE_RADIUS_IN_METERS = 100f

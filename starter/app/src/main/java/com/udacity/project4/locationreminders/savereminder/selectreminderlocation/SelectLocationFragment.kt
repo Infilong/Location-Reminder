@@ -45,11 +45,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override val _viewModel: SaveReminderViewModel by inject()
     private lateinit var binding: FragmentSelectLocationBinding
     private lateinit var contxt: Context
-    private val runningQOrLater =
-        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
 
     private lateinit var map: GoogleMap
-    private val TAG = SelectLocationFragment::class.java.simpleName
     private var marker: Marker? = null
     private val zoomLevel = 15f
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -240,7 +237,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
         val permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         val resultCode = 33
-        Log.i(com.udacity.project4.locationreminders.savereminder.TAG,
+        Log.i(TAG,
             "Request foreground location permission")
         //Request permissions passing in the current activity, the permissions array and the result code.
         requestPermissions(permissionsArray, resultCode)
@@ -300,7 +297,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     startIntentSenderForResult(exception.resolution.intentSender,
                         REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE, null, 0, 0, 0, null)
                 } catch (sendEx: IntentSender.SendIntentException) {
-                    Log.d(com.udacity.project4.locationreminders.savereminder.TAG,
+                    Log.d(TAG,
                         "Error getting location settings resolution: " + sendEx.message)
                 }
             } else {
