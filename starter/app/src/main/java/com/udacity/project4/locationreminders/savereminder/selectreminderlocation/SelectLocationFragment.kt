@@ -264,6 +264,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     requestForegroundLocationPermissions()
                 }.show()
         } else {
+            enableCurrentLocation()
             checkDeviceLocationSettings()
         }
     }
