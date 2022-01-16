@@ -98,7 +98,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         requestForegroundLocationPermissions()
-        enableCurrentLocation()
 
         setMapStyle(map)
         setMapLongClick(map)
@@ -257,6 +256,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     ) {
         if (requestCode == REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE) {
             if (foregroundLocationPermissionApproved()) {
+                enableCurrentLocation()
                 return
             } else {
                 // This app has very little use when permissions are not granted so present a snackbar explaining
