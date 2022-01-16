@@ -271,6 +271,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
+    //Separate check device location settings and request location permissions
     private fun checkPermissions() {
         if (foregroundLocationPermissionApproved()) {
             checkDeviceLocationSettings()
@@ -313,6 +314,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
+    // After the user chooses whether to accept or deny device location permissions,
+    // this checks if the user has chosen to accept the permissions. If not, it will ask again.
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE) {
