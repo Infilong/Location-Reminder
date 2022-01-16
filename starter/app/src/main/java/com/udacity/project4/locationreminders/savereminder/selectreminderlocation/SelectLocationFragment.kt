@@ -16,7 +16,6 @@ import android.view.*
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
-import androidx.navigation.fragment.findNavController
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
@@ -77,7 +76,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        requestForegroundLocationPermissions()
+        checkPermissions()
 
 //       call this function after the user confirms on the selected location
         binding.selectLocationSaveButton.setOnClickListener {
@@ -193,7 +192,6 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             _viewModel.latitude.value = it.position.latitude
             _viewModel.longitude.value = it.position.longitude
         }
-        checkDeviceLocationSettings()
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -226,9 +224,9 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     *  Android versions.This app need foreground and background location permission to work.
     */
     @TargetApi(29)
-    fun foregroundLocationPermissionApproved(): Boolean {
+    private fun foregroundLocationPermissionApproved(): Boolean {
         return (PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(
-            requireActivity(),
+            contxt,
             Manifest.permission.ACCESS_FINE_LOCATION))
     }
 
@@ -236,7 +234,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
      *  Requests ACCESS_FINE_LOCATION.
      */
     @TargetApi(29)
-    fun requestForegroundLocationPermissions() {
+    private fun requestForegroundLocationPermissions() {
         if (foregroundLocationPermissionApproved()) {
             return
         }
@@ -246,6 +244,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             "Request foreground location permission")
         //Request permissions passing in the current activity, the permissions array and the result code.
         requestPermissions(permissionsArray, resultCode)
+
     }
 
     // Check if location permissions are granted and if so enable the current location
@@ -254,19 +253,29 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         permissions: Array<out String>,
         grantResults: IntArray,
     ) {
-        if (requestCode == REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE) {
-            if (foregroundLocationPermissionApproved()) {
-                enableCurrentLocation()
-                return
-            } else {
-                // This app has very little use when permissions are not granted so present a snackbar explaining
-                // that the user needs location permissions in order to play.
-                Snackbar.make(binding.root,
-                    R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
-                    .setAction(R.string.settings) {
-                        requestForegroundLocationPermissions()
-                    }.show()
-            }
+        if (grantResults.isEmpty() ||
+            grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
+            (requestCode == REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE &&
+                    grantResults[FOREGROUND_LOCATION_PERMISSION_INDEX] ==
+                    PackageManager.PERMISSION_DENIED)
+        ) {
+            // This app has very little use when permissions are not granted so present a snackbar explaining
+            // that the user needs location permissions in order to play.
+            Snackbar.make(binding.root,
+                R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
+                .setAction(R.string.settings) {
+                    requestForegroundLocationPermissions()
+                }.show()
+        } else {
+            checkDeviceLocationSettings()
+        }
+    }
+
+    private fun checkPermissions() {
+        if (foregroundLocationPermissionApproved()) {
+            checkDeviceLocationSettings()
+        } else {
+            requestForegroundLocationPermissions()
         }
     }
 
@@ -288,7 +297,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             if (exception is ResolvableApiException && resolve) {
                 try {
                     startIntentSenderForResult(exception.resolution.intentSender,
-                        TURN_DEVICE_LOCATION_ON_REQUEST_CODE, null, 0, 0, 0, null)
+                        REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE, null, 0, 0, 0, null)
                 } catch (sendEx: IntentSender.SendIntentException) {
                     Log.d(com.udacity.project4.locationreminders.savereminder.TAG,
                         "Error getting location settings resolution: " + sendEx.message)
@@ -306,12 +315,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == TURN_DEVICE_LOCATION_ON_REQUEST_CODE) {
+        if (requestCode == REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE) {
             // We don't rely on the result code, but just check the location setting again
             checkDeviceLocationSettings(false)
         }
     }
 }
 
-private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 33
-private const val TURN_DEVICE_LOCATION_ON_REQUEST_CODE = 35
+private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
+private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
+private const val TAG = "SelectLocationFragment"
+private const val LOCATION_PERMISSION_INDEX = 0
+private const val FOREGROUND_LOCATION_PERMISSION_INDEX = 1

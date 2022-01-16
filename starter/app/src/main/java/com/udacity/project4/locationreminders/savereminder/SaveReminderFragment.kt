@@ -96,7 +96,7 @@ class SaveReminderFragment : BaseFragment() {
 //             1) add a geofencing request
 //             2) save the reminder to the local db
             newReminder = ReminderDataItem(title, description, location, latitude, longitude)
-            checkDeviceLocationSettingsAndStartGeofence()
+            checkPermissionsAndStartGeofencing()
         }
     }
 
@@ -234,6 +234,13 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
+    private fun checkPermissionsAndStartGeofencing() {
+        if (foregroundAndBackgroundLocationPermissionApproved()) {
+            checkDeviceLocationSettingsAndStartGeofence()
+        } else {
+            requestForegroundAndBackgroundLocationPermissions()
+        }
+    }
     /*
      *  Determines whether the app has the appropriate permissions across Android 10+ and all other
      *  Android versions.
