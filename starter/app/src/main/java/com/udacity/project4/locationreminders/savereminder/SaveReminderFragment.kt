@@ -109,27 +109,6 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
-    // Check if location permissions are granted and if so enable the
-    // location data layer.
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray,
-    ) {
-        if (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE) {
-            if (foregroundAndBackgroundLocationPermissionApproved()) {
-                return
-            } //This app has very little use when permissions are not granted so present a snackbar explaining
-            // that the user needs location permissions in order to play.
-            Snackbar.make(binding.root,
-                R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
-                .setAction(R.string.settings) {
-                    requestForegroundAndBackgroundLocationPermissions()
-                }.show()
-
-        }
-    }
-
     /*
     *  Uses the Location Client to check the current state of location settings, and gives the user
     *  the opportunity to turn on location services within our app.
@@ -191,23 +170,27 @@ class SaveReminderFragment : BaseFragment() {
             } else {
                 Snackbar.make(
                     binding.root,
-                    R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+                    R.string.location_required_error, Snackbar.LENGTH_LONG
                 ).setAction(android.R.string.ok) {
                     checkDeviceLocationSettingsAndStartGeofence()
                 }.show()
             }
         }
-        locationSettingsResponseTask.addOnCompleteListener {
-            if (it.isSuccessful) {
-                if (newReminder.latitude != null && newReminder.longitude != null && _viewModel.validateEnteredData(
-                        newReminder)
-                ) {
-                    addGeofenceForReminder()
-                    _viewModel.saveReminder(newReminder)
-                } else {
-                    _viewModel.validateEnteredData(newReminder)
+        locationSettingsResponseTask.addOnSuccessListener {
+            if (newReminder.latitude != null && newReminder.longitude != null && _viewModel.validateEnteredData(
+                    newReminder) && foregroundAndBackgroundLocationPermissionApproved()
+            ) {
+                addGeofenceForReminder()
+                _viewModel.saveReminder(newReminder)
+            } else {
+                if (!foregroundAndBackgroundLocationPermissionApproved()) {
+                    Snackbar.make(binding.root,
+                        R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
+                        .setAction(R.string.settings) {
+                            requestForegroundAndBackgroundLocationPermissions()
+                        }.show()
                 }
-
+                _viewModel.validateEnteredData(newReminder)
             }
         }
     }
@@ -303,6 +286,26 @@ class SaveReminderFragment : BaseFragment() {
         )
     }
 
+    // Check if location permissions are granted and if so enable the
+    // location data layer.
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        if (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE) {
+            if (foregroundAndBackgroundLocationPermissionApproved()) {
+                return
+            } else {//This app has very little use when permissions are not granted so present a snackbar explaining
+                // that the user needs location permissions in order to play.
+                Snackbar.make(binding.root,
+                    R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
+                    .setAction(R.string.settings) {
+                        requestForegroundAndBackgroundLocationPermissions()
+                    }.show()
+            }
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()

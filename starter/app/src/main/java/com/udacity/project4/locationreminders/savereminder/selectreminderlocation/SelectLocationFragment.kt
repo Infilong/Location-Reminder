@@ -77,6 +77,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
+        //map.setOnMyLocationButtonClickListener{}
+        checkDeviceLocationSettings()
 //       call this function after the user confirms on the selected location
         binding.selectLocationSaveButton.setOnClickListener {
             onLocationSelected()
@@ -149,13 +151,10 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
-
     @SuppressLint("MissingPermission")
     private fun enableCurrentLocation() {
         if (foregroundLocationPermissionApproved()) {
             map.isMyLocationEnabled = true
-            //map.setOnMyLocationButtonClickListener{checkDeviceLocationSettings()}
-            checkDeviceLocationSettings()
             zoomCurrentLocation()
         }
     }
@@ -198,29 +197,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         findNavController().popBackStack()
     }
 
-
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.map_options, menu)
-    }
-
-    // Check if location permissions are granted and if so enable the current location
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray,
-    ) {
-        if (requestCode == REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE) {
-            if (foregroundLocationPermissionApproved()) {
-                return
-            }
-            // This app has very little use when permissions are not granted so present a snackbar explaining
-            // that the user needs location permissions in order to play.
-            Snackbar.make(binding.root,
-                R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
-                .setAction(R.string.settings) {
-                    requestForegroundLocationPermissions()
-                }.show()
-        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
@@ -271,11 +249,24 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         requestPermissions(permissionsArray, resultCode)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == TURN_DEVICE_LOCATION_ON_REQUEST_CODE) {
-            // We don't rely on the result code, but just check the location setting again
-            checkDeviceLocationSettings(false)
+    // Check if location permissions are granted and if so enable the current location
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        if (requestCode == REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE) {
+            if (foregroundLocationPermissionApproved()) {
+                return
+            } else {
+                // This app has very little use when permissions are not granted so present a snackbar explaining
+                // that the user needs location permissions in order to play.
+                Snackbar.make(binding.root,
+                    R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
+                    .setAction(R.string.settings) {
+                        requestForegroundLocationPermissions()
+                    }.show()
+            }
         }
     }
 
@@ -310,6 +301,14 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                     checkDeviceLocationSettings()
                 }.show()
             }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == TURN_DEVICE_LOCATION_ON_REQUEST_CODE) {
+            // We don't rely on the result code, but just check the location setting again
+            checkDeviceLocationSettings(false)
         }
     }
 }
