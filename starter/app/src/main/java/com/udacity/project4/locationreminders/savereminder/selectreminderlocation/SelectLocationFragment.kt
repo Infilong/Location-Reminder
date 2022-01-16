@@ -307,9 +307,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                 Snackbar.make(
                     binding.root,
                     R.string.location_required_error, Snackbar.LENGTH_LONG
-                ).setAction(android.R.string.ok) {
-                    checkDeviceLocationSettings()
-                }.show()
+                ).show()
             }
         }
     }
