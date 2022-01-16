@@ -77,8 +77,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        //map.setOnMyLocationButtonClickListener{}
-        checkDeviceLocationSettings()
+        requestForegroundLocationPermissions()
+
 //       call this function after the user confirms on the selected location
         binding.selectLocationSaveButton.setOnClickListener {
             onLocationSelected()
@@ -97,7 +97,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-        requestForegroundLocationPermissions()
+        enableCurrentLocation()
 
         setMapStyle(map)
         setMapLongClick(map)
@@ -193,7 +193,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             _viewModel.latitude.value = it.position.latitude
             _viewModel.longitude.value = it.position.longitude
         }
-        findNavController().popBackStack()
+        checkDeviceLocationSettings()
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
